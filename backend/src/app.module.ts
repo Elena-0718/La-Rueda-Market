@@ -7,29 +7,30 @@ import {
 } from '@nestjs/typeorm';
 
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import {
+  AppService,
+  DataLoaderUsers,
+} from './app.service';
+
+import { UsersModule } from './users/users.module';
+import { CredentialModule } from './credential/credential.module';
+import { AuthModule } from './auth/auth.module';
+
+import { User } from './entities/users.entity';
+import { Credential } from './entities/credential.entity';
 
 import typeorm from './config/typeorm';
 
 @Module({
   imports: [
-    /* =========================
-       CONFIG GLOBAL
-    ========================== */
-
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env.development',
       load: [typeorm],
     }),
 
-    /* =========================
-       TYPEORM
-    ========================== */
-
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
-
       useFactory: (
         config: ConfigService,
       ): TypeOrmModuleOptions =>
@@ -38,41 +39,39 @@ import typeorm from './config/typeorm';
         ),
     }),
 
-    /* =========================
-       JWT
-    ========================== */
+    TypeOrmModule.forFeature([User, Credential]),
 
     JwtModule.registerAsync({
       imports: [ConfigModule],
-
       inject: [ConfigService],
-
       global: true,
-
-      useFactory: (
-        config: ConfigService,
-      ) => {
+      useFactory: (config: ConfigService) => {
         const expiresIn =
-          config.get<
-            JwtSignOptions['expiresIn']
-          >('JWT_EXPIRES_IN') || '1d';
+          config.get<JwtSignOptions['expiresIn']>(
+            'JWT_EXPIRES_IN',
+          ) || '1d';
 
         return {
-          secret:
-            config.getOrThrow<string>(
-              'JWT_SECRET',
-            ),
-
+          secret: config.getOrThrow<string>(
+            'JWT_SECRET',
+          ),
           signOptions: {
             expiresIn,
           },
         };
       },
     }),
+
+    UsersModule,
+    CredentialModule,
+    AuthModule,
   ],
 
   controllers: [AppController],
 
-  providers: [AppService],
+  providers: [
+    AppService,
+    DataLoaderUsers,
+  ],
 })
 export class AppModule {}
