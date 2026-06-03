@@ -18,8 +18,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { CreateUserDto } from './DTOS/CreateUser.dto';
-import { UpdateUserDto } from './DTOS/UpdateUser.dto';
+import { CreateUserDto } from './dtos/CreateUser.dto';
+import { UpdateUserDto } from './dtos/UpdateUser.dto';
 import { UserService } from './users.service';
 
 

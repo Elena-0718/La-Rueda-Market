@@ -8,12 +8,12 @@ import {
 import * as bcrypt from 'bcrypt';
 
 import { CredentialRepository } from './credential.repository';
-import { ChangePasswordDto } from './DTOS/change-password.dto';
-import { ForgotPasswordDto } from './DTOS/forgot-password.dto';
-import { VerifyResetCodeDto } from './DTOS/verify-reset-code.dto';
-import { ResetPasswordDto } from './DTOS/reset-password.dto';
+import { ChangePasswordDto } from './dtos/change-password.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { VerifyResetCodeDto } from './dtos/verify-reset-code.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
 import { Roles } from '../enum/roles.enum';
-import { ChangeRoleDto } from './DTOS/change-role.dto';
+import { ChangeRoleDto } from './dtos/change-role.dto';
 
 @Injectable()
 export class CredentialService {

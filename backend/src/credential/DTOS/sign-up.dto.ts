@@ -2,8 +2,9 @@ import { Type } from 'class-transformer';
 import { ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
+
+import { CreateUserDto } from '../../users/dtos/CreateUser.dto';
 import { CreateCredentialDto } from './create-credential.dto';
-import { CreateUserDto } from '../../users/DTOS/CreateUser.dto';
 
 export class SignUpDto {
   @ApiProperty({

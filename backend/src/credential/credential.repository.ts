@@ -4,7 +4,7 @@ import { Repository } from 'typeorm';
 
 import { Credential } from '../entities/credential.entity';
 import { User } from '../entities/users.entity';
-import { ChangeRoleDto } from './DTOS/change-role.dto';
+import { ChangeRoleDto } from './dtos/change-role.dto';
 
 
 @Injectable()

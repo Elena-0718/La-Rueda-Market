@@ -24,11 +24,11 @@ import {
 } from '@nestjs/swagger';
 
 import { CredentialService } from './credential.service';
-import { ChangePasswordDto } from './DTOS/change-password.dto';
-import { ForgotPasswordDto } from './DTOS/forgot-password.dto';
-import { VerifyResetCodeDto } from './DTOS/verify-reset-code.dto';
-import { ResetPasswordDto } from './DTOS/reset-password.dto';
-import { ChangeRoleDto } from './DTOS/change-role.dto';
+import { ChangePasswordDto } from './dtos/change-password.dto';
+import { ForgotPasswordDto } from './dtos/forgot-password.dto';
+import { VerifyResetCodeDto } from './dtos/verify-reset-code.dto';
+import { ResetPasswordDto } from './dtos/reset-password.dto';
+import { ChangeRoleDto } from './dtos/change-role.dto';
 
 import { RolesDecorator } from '../decorators/roles.decorator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';

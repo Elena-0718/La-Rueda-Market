@@ -8,8 +8,8 @@ import {
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 import { AuthService } from './auth.service';
-import { LoginDto } from '../credential/DTOS/login.dto';
-import { SignUpDto } from '../credential/DTOS/sign-up.dto';
+import { LoginDto } from '../credential/dtos/login.dto';
+import { SignUpDto } from '../credential/dtos/sign-up.dto';
 
 
 @ApiTags('Autenticación')

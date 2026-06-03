@@ -8,8 +8,8 @@ import * as bcrypt from 'bcrypt';
 
 import { CredentialRepository } from '../credential/credential.repository';
 import { UserRepository } from '../users/users.repository';
-import { SignUpDto } from '../credential/DTOS/sign-up.dto';
-import { LoginDto } from '../credential/DTOS/login.dto';
+import { SignUpDto } from '../credential/dtos/sign-up.dto';
+import { LoginDto } from '../credential/dtos/login.dto';
 
 @Injectable()
 export class AuthService {

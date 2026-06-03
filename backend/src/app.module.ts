@@ -18,8 +18,11 @@ import { AuthModule } from './auth/auth.module';
 
 import { User } from './entities/users.entity';
 import { Credential } from './entities/credential.entity';
+import { ProductsModule } from './products/products.module';
+
 
 import typeorm from './config/typeorm';
+import { CategoriesModule } from './category/category.module';
 
 @Module({
   imports: [
@@ -65,6 +68,8 @@ import typeorm from './config/typeorm';
     UsersModule,
     CredentialModule,
     AuthModule,
+    ProductsModule,
+    CategoriesModule,
   ],
 
   controllers: [AppController],
