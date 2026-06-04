@@ -90,11 +90,15 @@ export class UpdateProductDto {
   isFeatured?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Listado de URLs de imágenes del producto.',
-    example: ['https://miapp.com/images/arroz-diana.jpg'],
-  })
-  @IsOptional()
-  @IsArray({ message: 'Las imágenes deben enviarse como un arreglo.' })
-  @IsUrl({}, { each: true, message: 'Cada imagen debe ser una URL válida.' })
-  images?: string[];
+  description:
+    'Listado de rutas locales o URLs de imágenes del producto. Ejemplo: /uploads/products/arroz-diana-500g.jpg',
+  example: ['/uploads/products/arroz-diana-500g.jpg'],
+})
+@IsOptional()
+@IsArray({ message: 'Las imágenes deben enviarse como un arreglo.' })
+@IsString({
+  each: true,
+  message: 'Cada imagen debe ser una ruta o URL válida en formato texto.',
+})
+images?: string[];
 }

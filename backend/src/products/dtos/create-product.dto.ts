@@ -8,7 +8,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsArray,
-  IsUrl,
   IsEnum,
   IsBoolean,
 } from 'class-validator';
@@ -22,7 +21,7 @@ export class CreateProductDto {
     description: 'Nombre del producto.',
     example: 'Arroz Diana 500g',
   })
-  @IsString()
+  @IsString({ message: 'El nombre debe ser un texto válido.' })
   @IsNotEmpty({ message: 'El nombre del producto es obligatorio.' })
   name: string;
 
@@ -30,7 +29,7 @@ export class CreateProductDto {
     description: 'Descripción detallada del producto.',
     example: 'Arroz blanco de uso diario para el hogar.',
   })
-  @IsString()
+  @IsString({ message: 'La descripción debe ser un texto válido.' })
   @IsNotEmpty({ message: 'La descripción del producto es obligatoria.' })
   description: string;
 
@@ -72,7 +71,7 @@ export class CreateProductDto {
 
   @ApiProperty({
     description: 'UUID de la categoría a la que pertenece el producto.',
-    example: 'c31a34b7-8b9a-4e71-a29a-8c26f675a1c4',
+    example: '193c0453-f65e-4b8c-9c9b-485281ba1011',
   })
   @IsUUID('4', { message: 'La categoría debe ser un UUID válido.' })
   @IsNotEmpty({ message: 'La categoría es obligatoria.' })
@@ -87,14 +86,18 @@ export class CreateProductDto {
   isFeatured?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Listado de URLs de imágenes del producto.',
+    description:
+      'Listado de rutas locales o URLs de imágenes del producto. Ejemplo: /uploads/products/arroz-diana-500g.jpg',
     example: [
-      'https://miapp.com/images/arroz-diana.jpg',
-      'https://miapp.com/images/arroz-diana-2.jpg',
+      '/uploads/products/arroz-diana-500g.jpg',
+      '/uploads/products/arroz-diana-500g-2.jpg',
     ],
   })
   @IsOptional()
   @IsArray({ message: 'Las imágenes deben enviarse como un arreglo.' })
-  @IsUrl({}, { each: true, message: 'Cada imagen debe ser una URL válida.' })
+  @IsString({
+    each: true,
+    message: 'Cada imagen debe ser una ruta o URL válida en formato texto.',
+  })
   images?: string[];
 }
