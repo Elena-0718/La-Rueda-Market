@@ -48,7 +48,7 @@ function HomePage() {
   }, [products, searchText, selectedCategory])
 
   return (
-    <main className="min-h-screen bg-green-50 p-6">
+  <main className="p-6">
       <section className="mx-auto max-w-6xl">
         <header className="rounded-3xl bg-white p-8 shadow-lg">
           <p className="text-sm font-semibold tracking-widest text-green-700">
