@@ -1,14 +1,29 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { clearAuthSession, getAuthUser } from '../features/auth/authStorage'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
+import {
+  AUTH_CHANGE_EVENT_NAME,
+  clearAuthSession,
+  getAuthUser,
+} from '../features/auth/authStorage'
 
 function Header() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [user, setUser] = useState(null)
 
   useEffect(() => {
+  const syncUser = () => {
     setUser(getAuthUser())
-  }, [])
+  }
+
+  syncUser()
+
+  window.addEventListener(AUTH_CHANGE_EVENT_NAME, syncUser)
+
+  return () => {
+    window.removeEventListener(AUTH_CHANGE_EVENT_NAME, syncUser)
+  }
+}, [location.pathname])
 
   const handleLogout = () => {
     clearAuthSession()
@@ -91,6 +106,19 @@ function Header() {
               <span className="rounded-full bg-green-50 px-4 py-2 font-semibold text-green-900">
                 HOLA, {user.name}
               </span>
+
+              <NavLink
+      to="/perfil"
+      className={({ isActive }) =>
+        `rounded-full px-4 py-2 font-semibold ${
+          isActive
+            ? 'bg-green-800 text-white'
+            : 'text-green-900 hover:bg-green-100'
+        }`
+      }
+    >
+      MI PERFIL
+    </NavLink>
 
               <button
                 type="button"

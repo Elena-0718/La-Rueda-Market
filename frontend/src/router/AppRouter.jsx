@@ -5,6 +5,8 @@ import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import CartPage from '../pages/CartPage'
+import ProfilePage from '../pages/ProfilePage'
+import ProtectedRoute from './ProtectedRoute'
 
 function AppRouter() {
   return (
@@ -15,6 +17,14 @@ function AppRouter() {
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
         <Route path="/carrito" element={<CartPage />} />
+        <Route
+  path="/perfil"
+  element={
+    <ProtectedRoute>
+      <ProfilePage />
+    </ProtectedRoute>
+  }
+/>
       </Route>
     </Routes>
   )

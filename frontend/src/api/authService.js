@@ -67,3 +67,20 @@ export const resetPassword = async ({
 
   return response.data
 }
+export const changePassword = async ({
+  credentialUuid,
+  currentPassword,
+  newPassword,
+  confirmNewPassword,
+}) => {
+  const response = await axiosClient.patch(
+    `/credentials/change-password/${credentialUuid}`,
+    {
+      currentPassword,
+      newPassword,
+      confirmNewPassword,
+    },
+  )
+
+  return response.data
+}
