@@ -28,7 +28,7 @@ function AdminProductsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
-const [productBeingUpdated, setProductBeingUpdated] = useState(null)
+  const [productBeingUpdated, setProductBeingUpdated] = useState(null)
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -47,31 +47,33 @@ const [productBeingUpdated, setProductBeingUpdated] = useState(null)
   }, [])
 
   const handleDeactivateProduct = async (product) => {
-  const confirmDeactivate = window.confirm(
-    `¿SEGURO QUE DESEAS DESACTIVAR EL PRODUCTO "${product.name}"?`
-  )
-
-  if (!confirmDeactivate) return
-
-  try {
-    setProductBeingUpdated(product.uuid)
-    setErrorMessage('')
-    setSuccessMessage('')
-
-    await deactivateProduct(product.uuid)
-
-    setProducts((currentProducts) =>
-      currentProducts.filter((currentProduct) => currentProduct.uuid !== product.uuid)
+    const confirmDeactivate = window.confirm(
+      `¿SEGURO QUE DESEAS DESACTIVAR EL PRODUCTO "${product.name}"?`
     )
 
-    setSuccessMessage('PRODUCTO DESACTIVADO CORRECTAMENTE.')
-  } catch (error) {
-    console.error(error)
-    setErrorMessage('NO SE PUDO DESACTIVAR EL PRODUCTO.')
-  } finally {
-    setProductBeingUpdated(null)
+    if (!confirmDeactivate) return
+
+    try {
+      setProductBeingUpdated(product.uuid)
+      setErrorMessage('')
+      setSuccessMessage('')
+
+      await deactivateProduct(product.uuid)
+
+      setProducts((currentProducts) =>
+        currentProducts.filter(
+          (currentProduct) => currentProduct.uuid !== product.uuid
+        )
+      )
+
+      setSuccessMessage('PRODUCTO DESACTIVADO CORRECTAMENTE.')
+    } catch (error) {
+      console.error(error)
+      setErrorMessage('NO SE PUDO DESACTIVAR EL PRODUCTO.')
+    } finally {
+      setProductBeingUpdated(null)
+    }
   }
-}
 
   return (
     <main className="p-6">
@@ -91,12 +93,21 @@ const [productBeingUpdated, setProductBeingUpdated] = useState(null)
             </p>
           </div>
 
-          <Link
-            to="/admin"
-            className="rounded-2xl border border-green-800 px-5 py-3 text-center font-bold text-green-900 hover:bg-green-100"
-          >
-            VOLVER AL PANEL
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              to="/admin/productos/nuevo"
+              className="rounded-2xl bg-green-800 px-5 py-3 text-center font-bold text-white hover:bg-green-900"
+            >
+              NUEVO PRODUCTO
+            </Link>
+
+            <Link
+              to="/admin"
+              className="rounded-2xl border border-green-800 px-5 py-3 text-center font-bold text-green-900 hover:bg-green-100"
+            >
+              VOLVER AL PANEL
+            </Link>
+          </div>
         </header>
 
         <section className="mt-8 rounded-3xl bg-white p-6 shadow">
@@ -113,10 +124,10 @@ const [productBeingUpdated, setProductBeingUpdated] = useState(null)
           )}
 
           {successMessage && (
-  <p className="rounded-2xl bg-green-100 p-4 font-semibold text-green-800">
-    {successMessage}
-  </p>
-)}
+            <p className="rounded-2xl bg-green-100 p-4 font-semibold text-green-800">
+              {successMessage}
+            </p>
+          )}
 
           {!isLoading && !errorMessage && (
             <>
@@ -131,7 +142,7 @@ const [productBeingUpdated, setProductBeingUpdated] = useState(null)
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] border-collapse text-left">
+                <table className="w-full min-w-[1000px] border-collapse text-left">
                   <thead>
                     <tr className="border-b border-stone-200 bg-green-50 text-green-900">
                       <th className="p-4">PRODUCTO</th>
@@ -198,16 +209,26 @@ const [productBeingUpdated, setProductBeingUpdated] = useState(null)
                         </td>
 
                         <td className="p-4">
-  <button
-    type="button"
-    onClick={() => handleDeactivateProduct(product)}
-    disabled={productBeingUpdated === product.uuid}
-    className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-  >
-    {productBeingUpdated === product.uuid ? 'DESACTIVANDO...' : 'DESACTIVAR'}
-  </button>
-</td>
+                          <div className="flex flex-wrap gap-2">
+                            <Link
+                              to={`/admin/productos/${product.uuid}/editar`}
+                              className="rounded-full border border-green-200 px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50"
+                            >
+                              EDITAR
+                            </Link>
 
+                            <button
+                              type="button"
+                              onClick={() => handleDeactivateProduct(product)}
+                              disabled={productBeingUpdated === product.uuid}
+                              className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              {productBeingUpdated === product.uuid
+                                ? 'DESACTIVANDO...'
+                                : 'DESACTIVAR'}
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

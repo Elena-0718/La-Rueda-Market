@@ -13,6 +13,8 @@ import AdminRoute from './AdminRoute'
 import AdminProductsPage from '../pages/admin/AdminProductsPage'
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
+import AdminCreateProductPage from '../pages/admin/AdminCreateProductPage'
+import AdminEditProductPage from '../pages/admin/AdminEditProductPage'
 
 function AppRouter() {
   return (
@@ -44,6 +46,8 @@ function AppRouter() {
 >
   <Route index element={<AdminDashboardPage />} />
   <Route path="productos" element={<AdminProductsPage />} />
+  <Route path="productos/nuevo" element={<AdminCreateProductPage />} />
+  <Route path="productos/:uuid/editar" element={<AdminEditProductPage />} />
   <Route path="categorias" element={<AdminCategoriesPage />} />
    <Route path="usuarios" element={<AdminUsersPage />} />
 </Route>
