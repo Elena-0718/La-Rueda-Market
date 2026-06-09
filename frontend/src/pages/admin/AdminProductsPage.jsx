@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getProducts } from '../../api/productsService'
+import { deactivateProduct } from '../../api/adminProductsService'
 
 const getAvailabilityLabel = (availabilityType) => {
   const availability = {
@@ -26,6 +27,8 @@ function AdminProductsPage() {
   const [products, setProducts] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+const [productBeingUpdated, setProductBeingUpdated] = useState(null)
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -42,6 +45,33 @@ function AdminProductsPage() {
 
     loadProducts()
   }, [])
+
+  const handleDeactivateProduct = async (product) => {
+  const confirmDeactivate = window.confirm(
+    `¿SEGURO QUE DESEAS DESACTIVAR EL PRODUCTO "${product.name}"?`
+  )
+
+  if (!confirmDeactivate) return
+
+  try {
+    setProductBeingUpdated(product.uuid)
+    setErrorMessage('')
+    setSuccessMessage('')
+
+    await deactivateProduct(product.uuid)
+
+    setProducts((currentProducts) =>
+      currentProducts.filter((currentProduct) => currentProduct.uuid !== product.uuid)
+    )
+
+    setSuccessMessage('PRODUCTO DESACTIVADO CORRECTAMENTE.')
+  } catch (error) {
+    console.error(error)
+    setErrorMessage('NO SE PUDO DESACTIVAR EL PRODUCTO.')
+  } finally {
+    setProductBeingUpdated(null)
+  }
+}
 
   return (
     <main className="p-6">
@@ -82,6 +112,12 @@ function AdminProductsPage() {
             </p>
           )}
 
+          {successMessage && (
+  <p className="rounded-2xl bg-green-100 p-4 font-semibold text-green-800">
+    {successMessage}
+  </p>
+)}
+
           {!isLoading && !errorMessage && (
             <>
               <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -105,6 +141,7 @@ function AdminProductsPage() {
                       <th className="p-4">DISPONIBILIDAD</th>
                       <th className="p-4">STOCK</th>
                       <th className="p-4">ESTADO</th>
+                      <th className="p-4">ACCIONES</th>
                     </tr>
                   </thead>
 
@@ -159,6 +196,18 @@ function AdminProductsPage() {
                             {product.isActive ? 'ACTIVO' : 'INACTIVO'}
                           </span>
                         </td>
+
+                        <td className="p-4">
+  <button
+    type="button"
+    onClick={() => handleDeactivateProduct(product)}
+    disabled={productBeingUpdated === product.uuid}
+    className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    {productBeingUpdated === product.uuid ? 'DESACTIVANDO...' : 'DESACTIVAR'}
+  </button>
+</td>
+
                       </tr>
                     ))}
                   </tbody>

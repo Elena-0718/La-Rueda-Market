@@ -23,6 +23,7 @@ import { ProductsModule } from './products/products.module';
 
 import typeorm from './config/typeorm';
 import { CategoriesModule } from './category/category.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -70,6 +71,7 @@ import { CategoriesModule } from './category/category.module';
     AuthModule,
     ProductsModule,
     CategoriesModule,
+    UploadsModule,
   ],
 
   controllers: [AppController],
