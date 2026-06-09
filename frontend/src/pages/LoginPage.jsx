@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { login } from '../api/authService'
 import { saveAuthSession } from '../features/auth/authStorage'
 
 function LoginPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+const fromBuy = searchParams.get('from') === 'buy'
 
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
@@ -45,8 +47,10 @@ function LoginPage() {
         </h1>
 
         <p className="mt-3 text-stone-700">
-          ENTRA CON TU NÚMERO DE CELULAR Y CONTRASEÑA.
-        </p>
+  {fromBuy
+    ? 'INICIA SESIÓN PARA CONTINUAR CON TU COMPRA.'
+    : 'ENTRA CON TU NÚMERO DE CELULAR Y CONTRASEÑA.'}
+</p>
 
         {errorMessage && (
           <p className="mt-5 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">

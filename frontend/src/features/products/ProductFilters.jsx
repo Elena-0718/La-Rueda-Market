@@ -11,47 +11,56 @@ function ProductFilters({
         BUSCAR PRODUCTOS
       </h2>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <div>
-          <label
-            htmlFor="search"
-            className="mb-2 block font-semibold text-green-900"
+      <div className="mt-5">
+        <label
+          htmlFor="search"
+          className="mb-2 block font-semibold text-green-900"
+        >
+          BUSCAR POR NOMBRE
+        </label>
+
+        <input
+          id="search"
+          type="text"
+          value={searchText}
+          onChange={(event) => onSearchChange(event.target.value)}
+          placeholder="EJEMPLO: ARROZ, JABÓN, TOMATE..."
+          className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
+        />
+      </div>
+
+      <div className="mt-6">
+        <p className="mb-3 font-semibold text-green-900">
+          FILTRAR POR CATEGORÍA
+        </p>
+
+        <div className="flex gap-3 overflow-x-auto pb-2">
+          <button
+            type="button"
+            onClick={() => onCategoryChange('all')}
+            className={`shrink-0 rounded-full px-5 py-3 font-bold ${
+              selectedCategory === 'all'
+                ? 'bg-green-800 text-white'
+                : 'bg-green-100 text-green-900'
+            }`}
           >
-            BUSCAR POR NOMBRE
-          </label>
+            TODAS
+          </button>
 
-          <input
-            id="search"
-            type="text"
-            value={searchText}
-            onChange={(event) => onSearchChange(event.target.value)}
-            placeholder="EJEMPLO: ARROZ, JABÓN, TOMATE..."
-            className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
-          />
-        </div>
-
-        <div>
-          <label
-            htmlFor="category"
-            className="mb-2 block font-semibold text-green-900"
-          >
-            FILTRAR POR CATEGORÍA
-          </label>
-
-          <select
-            id="category"
-            value={selectedCategory}
-            onChange={(event) => onCategoryChange(event.target.value)}
-            className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
-          >
-            <option value="all">TODAS LAS CATEGORÍAS</option>
-
-            {categories.map((category) => (
-              <option key={category.uuid} value={category.uuid}>
-                {category.name}
-              </option>
-            ))}
-          </select>
+          {categories.map((category) => (
+            <button
+              key={category.uuid}
+              type="button"
+              onClick={() => onCategoryChange(category.uuid)}
+              className={`shrink-0 rounded-full px-5 py-3 font-bold ${
+                selectedCategory === category.uuid
+                  ? 'bg-green-800 text-white'
+                  : 'bg-green-100 text-green-900'
+              }`}
+            >
+              {category.name}
+            </button>
+          ))}
         </div>
       </div>
     </section>

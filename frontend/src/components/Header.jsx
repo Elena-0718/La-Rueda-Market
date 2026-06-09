@@ -12,18 +12,18 @@ function Header() {
   const [user, setUser] = useState(null)
 
   useEffect(() => {
-  const syncUser = () => {
-    setUser(getAuthUser())
-  }
+    const syncUser = () => {
+      setUser(getAuthUser())
+    }
 
-  syncUser()
+    syncUser()
 
-  window.addEventListener(AUTH_CHANGE_EVENT_NAME, syncUser)
+    window.addEventListener(AUTH_CHANGE_EVENT_NAME, syncUser)
 
-  return () => {
-    window.removeEventListener(AUTH_CHANGE_EVENT_NAME, syncUser)
-  }
-}, [location.pathname])
+    return () => {
+      window.removeEventListener(AUTH_CHANGE_EVENT_NAME, syncUser)
+    }
+  }, [location.pathname])
 
   const handleLogout = () => {
     clearAuthSession()
@@ -58,19 +58,6 @@ function Header() {
             PRODUCTOS
           </NavLink>
 
-          <NavLink
-            to="/carrito"
-            className={({ isActive }) =>
-              `rounded-full px-4 py-2 font-semibold ${
-                isActive
-                  ? 'bg-green-800 text-white'
-                  : 'text-green-900 hover:bg-green-100'
-              }`
-            }
-          >
-            CARRITO
-          </NavLink>
-
           {!user && (
             <>
               <NavLink
@@ -103,22 +90,18 @@ function Header() {
 
           {user && (
             <>
-              <span className="rounded-full bg-green-50 px-4 py-2 font-semibold text-green-900">
-                HOLA, {user.name}
-              </span>
-
               <NavLink
-      to="/perfil"
-      className={({ isActive }) =>
-        `rounded-full px-4 py-2 font-semibold ${
-          isActive
-            ? 'bg-green-800 text-white'
-            : 'text-green-900 hover:bg-green-100'
-        }`
-      }
-    >
-      MI PERFIL
-    </NavLink>
+                to="/perfil"
+                className={({ isActive }) =>
+                  `rounded-full px-4 py-2 font-semibold ${
+                    isActive
+                      ? 'bg-green-800 text-white'
+                      : 'text-green-900 hover:bg-green-100'
+                  }`
+                }
+              >
+                MI PERFIL
+              </NavLink>
 
               <button
                 type="button"

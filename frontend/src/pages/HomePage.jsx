@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { getProducts } from '../api/productsService'
 import { getCategories } from '../api/categoriesService'
+import { getProducts } from '../api/productsService'
+import { getAuthUser } from '../features/auth/authStorage'
 import ProductFilters from '../features/products/ProductFilters'
 import ProductList from '../features/products/ProductList'
 
@@ -47,22 +48,47 @@ function HomePage() {
     })
   }, [products, searchText, selectedCategory])
 
+  const authUser = getAuthUser()
+  const firstName = authUser?.name?.split(' ')[0]
+
   return (
-  <main className="p-6">
+    <main className="p-6">
       <section className="mx-auto max-w-6xl">
-        <header className="rounded-3xl bg-white p-8 shadow-lg">
-          <p className="text-sm font-semibold tracking-widest text-green-700">
-            BIENVENIDO A
-          </p>
+        <header className="overflow-hidden rounded-3xl bg-white shadow-lg">
+  <div className="grid gap-6 p-8 md:grid-cols-[1.4fr_0.8fr] md:items-center">
+    <div>
+      <p className="text-sm font-semibold tracking-widest text-green-700">
+        {firstName ? `HOLA, ${firstName}` : 'BIENVENIDO A'}
+      </p>
 
-          <h1 className="mt-2 text-4xl font-bold text-green-900">
-            LA RUEDA MARKET
-          </h1>
+      <h1 className="mt-2 text-4xl font-black leading-tight text-green-900 md:text-5xl">
+        LA RUEDA MARKET
+      </h1>
 
-          <p className="mt-4 text-lg text-stone-700">
-            TU MERCADO MÁS CERCA
-          </p>
-        </header>
+      <p className="mt-4 max-w-2xl text-xl font-semibold text-stone-700">
+        {firstName
+          ? '¿QUÉ NECESITAS PARA TU HOGAR HOY?'
+          : 'MERCADO, ASEO, CARNES Y PAPELERÍA SIN COMPLICARTE.'}
+      </p>
+
+      <p className="mt-3 max-w-2xl text-stone-600">
+        COMPRA CERCA, FÁCIL Y CON PRODUCTOS PENSADOS PARA TU CASA Y TU VEREDA.
+      </p>
+    </div>
+
+    <div className="rounded-3xl bg-green-50 p-5">
+      <p className="text-sm font-bold text-green-800">
+        COMPRA SIMPLE
+      </p>
+
+      <ul className="mt-4 space-y-3 text-stone-700">
+        <li className="font-semibold">1. MIRA LOS PRODUCTOS</li>
+        <li className="font-semibold">2. ELIGE LO QUE NECESITAS</li>
+        <li className="font-semibold">3. INICIA SESIÓN PARA COMPRAR</li>
+      </ul>
+    </div>
+  </div>
+</header>
 
         <ProductFilters
           categories={categories}

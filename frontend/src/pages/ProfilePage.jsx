@@ -229,23 +229,27 @@ function ProfilePage() {
               </div>
 
               <div>
-                <label
-                  htmlFor="phone"
-                  className="mb-2 block font-semibold text-green-900"
-                >
-                  CELULAR
-                </label>
+  <label
+    htmlFor="phone"
+    className="mb-2 block font-semibold text-green-900"
+  >
+    CELULAR
+  </label>
 
-                <input
-                  id="phone"
-                  name="phone"
-                  type="tel"
-                  value={profileForm.phone}
-                  onChange={handleProfileChange}
-                  className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
-                  required
-                />
-              </div>
+  <input
+    id="phone"
+    name="phone"
+    type="tel"
+    value={profileForm.phone}
+    disabled
+    className="w-full rounded-2xl border border-stone-200 bg-stone-100 px-4 py-4 text-lg text-stone-600 outline-none"
+    required
+  />
+
+  <p className="mt-2 text-sm font-semibold text-stone-500">
+    EL CELULAR ES TU USUARIO DE INGRESO. PARA CAMBIARLO, CONTACTA AL ADMINISTRADOR.
+  </p>
+</div>
 
               <div>
                 <label
