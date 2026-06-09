@@ -31,11 +31,52 @@ function AdminLayout() {
             </NavLink>
 
             <NavLink
+              to="/admin/productos"
+              className={({ isActive }) =>
+                `rounded-full px-4 py-2 font-semibold ${
+                  isActive
+                    ? 'bg-green-800 text-white'
+                    : 'text-green-900 hover:bg-green-100'
+                }`
+              }
+            >
+              PRODUCTOS
+            </NavLink>
+
+            <NavLink
+              to="/admin/categorias"
+              className={({ isActive }) =>
+                `rounded-full px-4 py-2 font-semibold ${
+                  isActive
+                    ? 'bg-green-800 text-white'
+                    : 'text-green-900 hover:bg-green-100'
+                }`
+              }
+            >
+              CATEGORÍAS
+            </NavLink>
+
+            <NavLink
+  to="/admin/usuarios"
+  className={({ isActive }) =>
+    `rounded-full px-4 py-2 font-semibold ${
+      isActive
+        ? 'bg-green-800 text-white'
+        : 'text-green-900 hover:bg-green-100'
+    }`
+  }
+>
+  USUARIOS
+</NavLink>
+
+            <NavLink
               to="/"
               className="rounded-full border border-green-800 px-4 py-2 font-semibold text-green-900 hover:bg-green-100"
             >
               VER TIENDA
             </NavLink>
+
+            
           </nav>
         </div>
       </header>

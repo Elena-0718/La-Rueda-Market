@@ -10,6 +10,9 @@ import ProfilePage from '../pages/ProfilePage'
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
 import ProtectedRoute from './ProtectedRoute'
 import AdminRoute from './AdminRoute'
+import AdminProductsPage from '../pages/admin/AdminProductsPage'
+import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage'
+import AdminUsersPage from '../pages/admin/AdminUsersPage'
 
 function AppRouter() {
   return (
@@ -32,15 +35,18 @@ function AppRouter() {
       </Route>
 
       <Route
-        path="/admin"
-        element={
-          <AdminRoute>
-            <AdminLayout />
-          </AdminRoute>
-        }
-      >
-        <Route index element={<AdminDashboardPage />} />
-      </Route>
+  path="/admin"
+  element={
+    <AdminRoute>
+      <AdminLayout />
+    </AdminRoute>
+  }
+>
+  <Route index element={<AdminDashboardPage />} />
+  <Route path="productos" element={<AdminProductsPage />} />
+  <Route path="categorias" element={<AdminCategoriesPage />} />
+   <Route path="usuarios" element={<AdminUsersPage />} />
+</Route>
     </Routes>
   )
 }
