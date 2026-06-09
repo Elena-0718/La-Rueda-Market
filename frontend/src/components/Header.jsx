@@ -90,6 +90,21 @@ function Header() {
 
           {user && (
             <>
+              {user.role === 'ADMIN' && (
+                <NavLink
+                  to="/admin"
+                  className={({ isActive }) =>
+                    `rounded-full px-4 py-2 font-semibold ${
+                      isActive
+                        ? 'bg-green-800 text-white'
+                        : 'text-green-900 hover:bg-green-100'
+                    }`
+                  }
+                >
+                  PANEL ADMIN
+                </NavLink>
+              )}
+
               <NavLink
                 to="/perfil"
                 className={({ isActive }) =>
