@@ -1,27 +1,100 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getCategories } from '../../api/categoriesService'
+import {
+  deactivateCategory,
+  getAdminCategories,
+  updateCategory,
+} from '../../api/adminCategoriesService'
 
 function AdminCategoriesPage() {
   const [categories, setCategories] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [categoryBeingUpdated, setCategoryBeingUpdated] = useState(null)
+
+  const loadCategories = async () => {
+    try {
+      const data = await getAdminCategories()
+      setCategories(data)
+    } catch (error) {
+      console.error(error)
+      setErrorMessage('NO SE PUDIERON CARGAR LAS CATEGORÍAS.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await getCategories()
-        setCategories(data)
-      } catch (error) {
-        console.error(error)
-        setErrorMessage('NO SE PUDIERON CARGAR LAS CATEGORÍAS.')
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
     loadCategories()
   }, [])
+
+  const handleDeactivateCategory = async (category) => {
+    const confirmDeactivate = window.confirm(
+      `¿SEGURO QUE DESEAS DESACTIVAR LA CATEGORÍA "${category.name}"?`
+    )
+
+    if (!confirmDeactivate) return
+
+    try {
+      setCategoryBeingUpdated(category.uuid)
+      setErrorMessage('')
+      setSuccessMessage('')
+
+      await deactivateCategory(category.uuid)
+
+      setCategories((currentCategories) =>
+        currentCategories.map((currentCategory) =>
+          currentCategory.uuid === category.uuid
+            ? { ...currentCategory, isActive: false }
+            : currentCategory
+        )
+      )
+
+      setSuccessMessage('CATEGORÍA DESACTIVADA CORRECTAMENTE.')
+    } catch (error) {
+      console.error(error)
+      setErrorMessage('NO SE PUDO DESACTIVAR LA CATEGORÍA.')
+    } finally {
+      setCategoryBeingUpdated(null)
+    }
+  }
+
+  const handleActivateCategory = async (category) => {
+    const confirmActivate = window.confirm(
+      `¿SEGURO QUE DESEAS ACTIVAR LA CATEGORÍA "${category.name}"?`
+    )
+
+    if (!confirmActivate) return
+
+    try {
+      setCategoryBeingUpdated(category.uuid)
+      setErrorMessage('')
+      setSuccessMessage('')
+
+      await updateCategory(category.uuid, {
+        name: category.name,
+        description: category.description,
+        sortOrder: Number(category.sortOrder),
+        isActive: true,
+      })
+
+      setCategories((currentCategories) =>
+        currentCategories.map((currentCategory) =>
+          currentCategory.uuid === category.uuid
+            ? { ...currentCategory, isActive: true }
+            : currentCategory
+        )
+      )
+
+      setSuccessMessage('CATEGORÍA ACTIVADA CORRECTAMENTE.')
+    } catch (error) {
+      console.error(error)
+      setErrorMessage('NO SE PUDO ACTIVAR LA CATEGORÍA.')
+    } finally {
+      setCategoryBeingUpdated(null)
+    }
+  }
 
   return (
     <main className="p-6">
@@ -37,16 +110,25 @@ function AdminCategoriesPage() {
             </h1>
 
             <p className="mt-3 text-stone-700">
-              CONSULTA LAS CATEGORÍAS DISPONIBLES PARA ORGANIZAR EL CATÁLOGO.
+              GESTIONA LAS CATEGORÍAS QUE ORGANIZAN EL CATÁLOGO.
             </p>
           </div>
 
-          <Link
-            to="/admin"
-            className="rounded-2xl border border-green-800 px-5 py-3 text-center font-bold text-green-900 hover:bg-green-100"
-          >
-            VOLVER AL PANEL
-          </Link>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Link
+              to="/admin/categorias/nueva"
+              className="rounded-2xl bg-green-800 px-5 py-3 text-center font-bold text-white hover:bg-green-900"
+            >
+              NUEVA CATEGORÍA
+            </Link>
+
+            <Link
+              to="/admin"
+              className="rounded-2xl border border-green-800 px-5 py-3 text-center font-bold text-green-900 hover:bg-green-100"
+            >
+              VOLVER AL PANEL
+            </Link>
+          </div>
         </header>
 
         <section className="mt-8 rounded-3xl bg-white p-6 shadow">
@@ -59,6 +141,12 @@ function AdminCategoriesPage() {
           {errorMessage && (
             <p className="rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
               {errorMessage}
+            </p>
+          )}
+
+          {successMessage && (
+            <p className="rounded-2xl bg-green-100 p-4 font-semibold text-green-800">
+              {successMessage}
             </p>
           )}
 
@@ -75,7 +163,7 @@ function AdminCategoriesPage() {
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[800px] border-collapse text-left">
+                <table className="w-full min-w-[900px] border-collapse text-left">
                   <thead>
                     <tr className="border-b border-stone-200 bg-green-50 text-green-900">
                       <th className="p-4">NOMBRE</th>
@@ -83,6 +171,7 @@ function AdminCategoriesPage() {
                       <th className="p-4">DESCRIPCIÓN</th>
                       <th className="p-4">ORDEN</th>
                       <th className="p-4">ESTADO</th>
+                      <th className="p-4">ACCIONES</th>
                     </tr>
                   </thead>
 
@@ -97,7 +186,7 @@ function AdminCategoriesPage() {
                         </td>
 
                         <td className="p-4 font-semibold text-stone-700">
-                          {category.slug}
+                          {category.slug || 'SIN SLUG'}
                         </td>
 
                         <td className="p-4 text-stone-700">
@@ -118,6 +207,43 @@ function AdminCategoriesPage() {
                           >
                             {category.isActive ? 'ACTIVA' : 'INACTIVA'}
                           </span>
+                        </td>
+
+                        <td className="p-4">
+                          <div className="flex flex-wrap gap-2">
+                            <Link
+                              to={`/admin/categorias/${category.uuid}/editar`}
+                              className="rounded-full border border-green-200 px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50"
+                            >
+                              EDITAR
+                            </Link>
+
+                            {category.isActive ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  handleDeactivateCategory(category)
+                                }
+                                disabled={categoryBeingUpdated === category.uuid}
+                                className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {categoryBeingUpdated === category.uuid
+                                  ? 'DESACTIVANDO...'
+                                  : 'DESACTIVAR'}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleActivateCategory(category)}
+                                disabled={categoryBeingUpdated === category.uuid}
+                                className="rounded-full border border-green-200 px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {categoryBeingUpdated === category.uuid
+                                  ? 'ACTIVANDO...'
+                                  : 'ACTIVAR'}
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
