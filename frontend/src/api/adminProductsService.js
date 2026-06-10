@@ -1,5 +1,10 @@
 import { axiosClient } from './axiosClient'
 
+export const getAdminProducts = async () => {
+  const response = await axiosClient.get('/products/admin/all')
+  return response.data
+}
+
 export const createProduct = async (productData) => {
   const response = await axiosClient.post('/products', productData)
   return response.data
@@ -30,5 +35,10 @@ export const uploadProductImage = async (file) => {
 
 export const deactivateProduct = async (productUuid) => {
   const response = await axiosClient.delete(`/products/${productUuid}`)
+  return response.data
+}
+
+export const activateProduct = async (productUuid) => {
+  const response = await axiosClient.put(`/products/activate/${productUuid}`)
   return response.data
 }

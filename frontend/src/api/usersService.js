@@ -20,3 +20,16 @@ export const updateMyProfile = async ({
 
   return response.data
 }
+
+export const uploadUserImage = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await axiosClient.post('/uploads/users', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
+
+  return response.data
+}

@@ -1,7 +1,13 @@
 import { useEffect, useState } from 'react'
 import { changePassword } from '../api/authService'
-import { getMyProfile, updateMyProfile } from '../api/usersService'
+import {
+  getMyProfile,
+  updateMyProfile,
+  uploadUserImage,
+} from '../api/usersService'
 import { saveAuthSession, getAuthToken } from '../features/auth/authStorage'
+
+const API_URL = 'http://localhost:3000'
 
 function ProfilePage() {
   const [profile, setProfile] = useState(null)
@@ -19,6 +25,9 @@ function ProfilePage() {
     newPassword: '',
     confirmNewPassword: '',
   })
+
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
 
   const [isLoading, setIsLoading] = useState(true)
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false)
@@ -42,12 +51,25 @@ function ProfilePage() {
     return Array.isArray(message) ? message.join(' ') : message
   }
 
+  const getImageSrc = (photoUrl) => {
+    if (!photoUrl) {
+      return ''
+    }
+
+    if (photoUrl.startsWith('/uploads')) {
+      return `${API_URL}${photoUrl}`
+    }
+
+    return photoUrl
+  }
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
         const data = await getMyProfile()
 
         setProfile(data)
+
         setProfileForm({
           fullName: data.fullName || '',
           phone: data.phone || '',
@@ -55,6 +77,8 @@ function ProfilePage() {
           birthDate: formatBirthDateForInput(data.birthDate),
           photoUrl: data.photoUrl || '',
         })
+
+        setImagePreview(data.photoUrl || '')
       } catch (error) {
         console.error(error)
         setProfileError('NO SE PUDO CARGAR TU PERFIL.')
@@ -75,6 +99,38 @@ function ProfilePage() {
     }))
   }
 
+  const handleImageChange = (event) => {
+    const file = event.target.files[0]
+
+    if (!file) {
+      setSelectedImage(null)
+      setImagePreview(profileForm.photoUrl || '')
+      return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    const maxSize = 2 * 1024 * 1024
+
+    if (!allowedTypes.includes(file.type)) {
+      setProfileError('SOLO SE PERMITEN IMÁGENES JPG, JPEG, PNG O WEBP.')
+      setSelectedImage(null)
+      setImagePreview(profileForm.photoUrl || '')
+      return
+    }
+
+    if (file.size > maxSize) {
+      setProfileError('LA FOTO NO PUEDE PESAR MÁS DE 2MB.')
+      setSelectedImage(null)
+      setImagePreview(profileForm.photoUrl || '')
+      return
+    }
+
+    setProfileError('')
+    setProfileMessage('')
+    setSelectedImage(file)
+    setImagePreview(URL.createObjectURL(file))
+  }
+
   const handlePasswordChange = (event) => {
     const { name, value } = event.target
 
@@ -91,9 +147,29 @@ function ProfilePage() {
     setIsUpdatingProfile(true)
 
     try {
-      const updatedProfile = await updateMyProfile(profileForm)
+      let photoUrl = profileForm.photoUrl
+
+      if (selectedImage) {
+        const uploadedImage = await uploadUserImage(selectedImage)
+        photoUrl = uploadedImage.url
+      }
+
+      const updatedProfile = await updateMyProfile({
+        fullName: profileForm.fullName,
+        village: profileForm.village,
+        birthDate: profileForm.birthDate,
+        photoUrl,
+      })
 
       setProfile(updatedProfile)
+
+      setProfileForm((currentForm) => ({
+        ...currentForm,
+        photoUrl: updatedProfile.photoUrl || '',
+      }))
+
+      setSelectedImage(null)
+      setImagePreview(updatedProfile.photoUrl || '')
 
       const token = getAuthToken()
 
@@ -186,7 +262,7 @@ function ProfilePage() {
           </h1>
 
           <p className="mt-3 text-stone-700">
-            ACTUALIZA TUS DATOS Y CAMBIA TU CONTRASEÑA CUANDO LO NECESITES.
+            ACTUALIZA TUS DATOS, TU FOTO DE PERFIL Y TU CONTRASEÑA CUANDO LO NECESITES.
           </p>
         </header>
 
@@ -209,6 +285,41 @@ function ProfilePage() {
             )}
 
             <form onSubmit={handleUpdateProfile} className="mt-6 space-y-5">
+              <div className="rounded-3xl bg-green-50 p-5">
+                <p className="mb-3 font-bold text-green-900">
+                  FOTO DE PERFIL
+                </p>
+
+                {imagePreview ? (
+                  <img
+                    src={getImageSrc(imagePreview)}
+                    alt="Foto de perfil"
+                    className="h-32 w-32 rounded-full object-cover shadow"
+                  />
+                ) : (
+                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white text-sm font-bold text-stone-500 shadow">
+                    SIN FOTO
+                  </div>
+                )}
+
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/webp"
+                  onChange={handleImageChange}
+                  className="mt-5 w-full rounded-2xl border border-green-200 bg-white px-4 py-3 outline-none focus:border-green-700"
+                />
+
+                <p className="mt-2 text-sm font-semibold text-stone-500">
+                  FORMATOS PERMITIDOS: JPG, JPEG, PNG O WEBP. MÁXIMO 2MB.
+                </p>
+
+                {selectedImage && (
+                  <p className="mt-2 text-sm font-semibold text-green-800">
+                    FOTO SELECCIONADA: {selectedImage.name}
+                  </p>
+                )}
+              </div>
+
               <div>
                 <label
                   htmlFor="fullName"
@@ -229,27 +340,27 @@ function ProfilePage() {
               </div>
 
               <div>
-  <label
-    htmlFor="phone"
-    className="mb-2 block font-semibold text-green-900"
-  >
-    CELULAR
-  </label>
+                <label
+                  htmlFor="phone"
+                  className="mb-2 block font-semibold text-green-900"
+                >
+                  CELULAR
+                </label>
 
-  <input
-    id="phone"
-    name="phone"
-    type="tel"
-    value={profileForm.phone}
-    disabled
-    className="w-full rounded-2xl border border-stone-200 bg-stone-100 px-4 py-4 text-lg text-stone-600 outline-none"
-    required
-  />
+                <input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  value={profileForm.phone}
+                  disabled
+                  className="w-full rounded-2xl border border-stone-200 bg-stone-100 px-4 py-4 text-lg text-stone-600 outline-none"
+                  required
+                />
 
-  <p className="mt-2 text-sm font-semibold text-stone-500">
-    EL CELULAR ES TU USUARIO DE INGRESO. PARA CAMBIARLO, CONTACTA AL ADMINISTRADOR.
-  </p>
-</div>
+                <p className="mt-2 text-sm font-semibold text-stone-500">
+                  EL CELULAR ES TU USUARIO DE INGRESO. PARA CAMBIARLO, CONTACTA AL ADMINISTRADOR.
+                </p>
+              </div>
 
               <div>
                 <label
@@ -284,25 +395,6 @@ function ProfilePage() {
                   type="date"
                   value={profileForm.birthDate}
                   onChange={handleProfileChange}
-                  className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="photoUrl"
-                  className="mb-2 block font-semibold text-green-900"
-                >
-                  FOTO URL
-                </label>
-
-                <input
-                  id="photoUrl"
-                  name="photoUrl"
-                  type="url"
-                  value={profileForm.photoUrl}
-                  onChange={handleProfileChange}
-                  placeholder="PUEDES DEJARLO VACÍO"
                   className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
                 />
               </div>

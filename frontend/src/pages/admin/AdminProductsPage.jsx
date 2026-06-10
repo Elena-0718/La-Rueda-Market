@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getProducts } from '../../api/productsService'
-import { deactivateProduct } from '../../api/adminProductsService'
+import {
+  activateProduct,
+  deactivateProduct,
+  getAdminProducts,
+} from '../../api/adminProductsService'
 
 const getAvailabilityLabel = (availabilityType) => {
   const availability = {
@@ -30,19 +33,19 @@ function AdminProductsPage() {
   const [successMessage, setSuccessMessage] = useState('')
   const [productBeingUpdated, setProductBeingUpdated] = useState(null)
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const data = await getProducts()
-        setProducts(data)
-      } catch (error) {
-        console.error(error)
-        setErrorMessage('NO SE PUDIERON CARGAR LOS PRODUCTOS.')
-      } finally {
-        setIsLoading(false)
-      }
+  const loadProducts = async () => {
+    try {
+      const data = await getAdminProducts()
+      setProducts(data)
+    } catch (error) {
+      console.error(error)
+      setErrorMessage('NO SE PUDIERON CARGAR LOS PRODUCTOS.')
+    } finally {
+      setIsLoading(false)
     }
+  }
 
+  useEffect(() => {
     loadProducts()
   }, [])
 
@@ -61,8 +64,10 @@ function AdminProductsPage() {
       await deactivateProduct(product.uuid)
 
       setProducts((currentProducts) =>
-        currentProducts.filter(
-          (currentProduct) => currentProduct.uuid !== product.uuid
+        currentProducts.map((currentProduct) =>
+          currentProduct.uuid === product.uuid
+            ? { ...currentProduct, isActive: false }
+            : currentProduct
         )
       )
 
@@ -70,6 +75,37 @@ function AdminProductsPage() {
     } catch (error) {
       console.error(error)
       setErrorMessage('NO SE PUDO DESACTIVAR EL PRODUCTO.')
+    } finally {
+      setProductBeingUpdated(null)
+    }
+  }
+
+  const handleActivateProduct = async (product) => {
+    const confirmActivate = window.confirm(
+      `¿SEGURO QUE DESEAS ACTIVAR EL PRODUCTO "${product.name}"?`
+    )
+
+    if (!confirmActivate) return
+
+    try {
+      setProductBeingUpdated(product.uuid)
+      setErrorMessage('')
+      setSuccessMessage('')
+
+      await activateProduct(product.uuid)
+
+      setProducts((currentProducts) =>
+        currentProducts.map((currentProduct) =>
+          currentProduct.uuid === product.uuid
+            ? { ...currentProduct, isActive: true }
+            : currentProduct
+        )
+      )
+
+      setSuccessMessage('PRODUCTO ACTIVADO CORRECTAMENTE.')
+    } catch (error) {
+      console.error(error)
+      setErrorMessage('NO SE PUDO ACTIVAR EL PRODUCTO.')
     } finally {
       setProductBeingUpdated(null)
     }
@@ -89,7 +125,7 @@ function AdminProductsPage() {
             </h1>
 
             <p className="mt-3 text-stone-700">
-              CONSULTA LOS PRODUCTOS REGISTRADOS EN LA TIENDA.
+              GESTIONA PRODUCTOS ACTIVOS E INACTIVOS DEL CATÁLOGO.
             </p>
           </div>
 
@@ -217,16 +253,29 @@ function AdminProductsPage() {
                               EDITAR
                             </Link>
 
-                            <button
-                              type="button"
-                              onClick={() => handleDeactivateProduct(product)}
-                              disabled={productBeingUpdated === product.uuid}
-                              className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                            >
-                              {productBeingUpdated === product.uuid
-                                ? 'DESACTIVANDO...'
-                                : 'DESACTIVAR'}
-                            </button>
+                            {product.isActive ? (
+                              <button
+                                type="button"
+                                onClick={() => handleDeactivateProduct(product)}
+                                disabled={productBeingUpdated === product.uuid}
+                                className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {productBeingUpdated === product.uuid
+                                  ? 'DESACTIVANDO...'
+                                  : 'DESACTIVAR'}
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleActivateProduct(product)}
+                                disabled={productBeingUpdated === product.uuid}
+                                className="rounded-full border border-green-200 px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {productBeingUpdated === product.uuid
+                                  ? 'ACTIVANDO...'
+                                  : 'ACTIVAR'}
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

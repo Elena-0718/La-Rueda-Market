@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { signUp } from '../api/authService'
+import { uploadUserImage } from '../api/usersService'
 
 function RegisterPage() {
   const navigate = useNavigate()
@@ -15,6 +16,9 @@ function RegisterPage() {
     confirmPassword: '',
   })
 
+  const [selectedImage, setSelectedImage] = useState(null)
+  const [imagePreview, setImagePreview] = useState('')
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
@@ -26,6 +30,37 @@ function RegisterPage() {
       ...currentFormData,
       [name]: value,
     }))
+  }
+
+  const handleImageChange = (event) => {
+    const file = event.target.files[0]
+
+    if (!file) {
+      setSelectedImage(null)
+      setImagePreview('')
+      return
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+    const maxSize = 2 * 1024 * 1024
+
+    if (!allowedTypes.includes(file.type)) {
+      setErrorMessage('SOLO SE PERMITEN IMÁGENES JPG, JPEG, PNG O WEBP.')
+      setSelectedImage(null)
+      setImagePreview('')
+      return
+    }
+
+    if (file.size > maxSize) {
+      setErrorMessage('LA FOTO NO PUEDE PESAR MÁS DE 2MB.')
+      setSelectedImage(null)
+      setImagePreview('')
+      return
+    }
+
+    setErrorMessage('')
+    setSelectedImage(file)
+    setImagePreview(URL.createObjectURL(file))
   }
 
   const handleSubmit = async (event) => {
@@ -41,7 +76,17 @@ function RegisterPage() {
     setIsSubmitting(true)
 
     try {
-      await signUp(formData)
+      let photoUrl = null
+
+      if (selectedImage) {
+        const uploadedImage = await uploadUserImage(selectedImage)
+        photoUrl = uploadedImage.url
+      }
+
+      await signUp({
+        ...formData,
+        photoUrl,
+      })
 
       setSuccessMessage('CUENTA CREADA CORRECTAMENTE. YA PUEDES INGRESAR.')
 
@@ -92,6 +137,41 @@ function RegisterPage() {
         )}
 
         <form onSubmit={handleSubmit} className="mt-6 grid gap-5 md:grid-cols-2">
+          <div className="md:col-span-2 rounded-3xl bg-green-50 p-5">
+            <p className="mb-3 font-bold text-green-900">
+              FOTO DE PERFIL OPCIONAL
+            </p>
+
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt="Vista previa de foto de perfil"
+                className="h-32 w-32 rounded-full object-cover shadow"
+              />
+            ) : (
+              <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white text-sm font-bold text-stone-500 shadow">
+                SIN FOTO
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/jpg,image/webp"
+              onChange={handleImageChange}
+              className="mt-5 w-full rounded-2xl border border-green-200 bg-white px-4 py-3 outline-none focus:border-green-700"
+            />
+
+            <p className="mt-2 text-sm font-semibold text-stone-500">
+              PUEDES CREAR TU CUENTA SIN FOTO. FORMATOS: JPG, JPEG, PNG O WEBP. MÁXIMO 2MB.
+            </p>
+
+            {selectedImage && (
+              <p className="mt-2 text-sm font-semibold text-green-800">
+                FOTO SELECCIONADA: {selectedImage.name}
+              </p>
+            )}
+          </div>
+
           <div className="md:col-span-2">
             <label
               htmlFor="fullName"
@@ -168,25 +248,6 @@ function RegisterPage() {
               onChange={handleChange}
               className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
               required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="photoUrl"
-              className="mb-2 block font-semibold text-green-900"
-            >
-              FOTO URL OPCIONAL
-            </label>
-
-            <input
-              id="photoUrl"
-              name="photoUrl"
-              type="url"
-              value={formData.photoUrl}
-              onChange={handleChange}
-              placeholder="PUEDES DEJARLO VACÍO"
-              className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
             />
           </div>
 
