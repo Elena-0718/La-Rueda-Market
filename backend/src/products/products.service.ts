@@ -18,6 +18,10 @@ export class ProductsService {
     return this.productsRepository.getAllProductsRepository();
   }
 
+  async getAllProductsAdmin() {
+    return this.productsRepository.getAllProductsAdminRepository();
+  }
+
   async getProductById(uuid: string) {
     const product = await this.productsRepository.getProductByIdRepository(uuid);
 
@@ -61,7 +65,8 @@ export class ProductsService {
   }
 
   async updateProduct(uuid: string, dto: UpdateProductDto) {
-    const product = await this.productsRepository.getProductByIdRepository(uuid);
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
@@ -69,26 +74,28 @@ export class ProductsService {
 
     let category: Category | undefined;
 
-if (dto.categoryUuid) {
-  const foundCategory =
-    await this.productsRepository.getCategoryByIdRepository(dto.categoryUuid);
+    if (dto.categoryUuid) {
+      const foundCategory =
+        await this.productsRepository.getCategoryByIdRepository(
+          dto.categoryUuid,
+        );
 
-  if (!foundCategory) {
-    throw new NotFoundException(
-      'La categoría enviada no existe o está inactiva.',
-    );
-  }
+      if (!foundCategory) {
+        throw new NotFoundException(
+          'La categoría enviada no existe o está inactiva.',
+        );
+      }
 
-  category = foundCategory;
-}
+      category = foundCategory;
+    }
 
     if (dto.name && dto.name !== product.name) {
       const existingProduct =
-        await this.productsRepository.getProductByNameRepository(dto.name);
+        await this.productsRepository.getProductByNameAdminRepository(dto.name);
 
       if (existingProduct && existingProduct.uuid !== uuid) {
         throw new ConflictException(
-          'Ya existe otro producto activo con ese nombre.',
+          'Ya existe otro producto con ese nombre.',
         );
       }
     }
@@ -107,7 +114,8 @@ if (dto.categoryUuid) {
   }
 
   async deleteProduct(uuid: string) {
-    const product = await this.productsRepository.getProductByIdRepository(uuid);
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
@@ -118,6 +126,23 @@ if (dto.categoryUuid) {
     } catch (error) {
       throw new BadRequestException(
         error.message || 'Error al eliminar el producto.',
+      );
+    }
+  }
+
+  async activateProduct(uuid: string) {
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
+
+    if (!product) {
+      throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
+    }
+
+    try {
+      return await this.productsRepository.activateProductRepository(product);
+    } catch (error) {
+      throw new BadRequestException(
+        error.message || 'Error al activar el producto.',
       );
     }
   }

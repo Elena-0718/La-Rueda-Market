@@ -7,7 +7,6 @@ import {
   Min,
   IsInt,
   IsArray,
-  IsUrl,
   IsEnum,
   IsBoolean,
 } from 'class-validator';
@@ -90,15 +89,23 @@ export class UpdateProductDto {
   isFeatured?: boolean;
 
   @ApiPropertyOptional({
-  description:
-    'Listado de rutas locales o URLs de imágenes del producto. Ejemplo: /uploads/products/arroz-diana-500g.jpg',
-  example: ['/uploads/products/arroz-diana-500g.jpg'],
-})
-@IsOptional()
-@IsArray({ message: 'Las imágenes deben enviarse como un arreglo.' })
-@IsString({
-  each: true,
-  message: 'Cada imagen debe ser una ruta o URL válida en formato texto.',
-})
-images?: string[];
+    description: 'Indica si el producto está activo o inactivo.',
+    example: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'isActive debe ser verdadero o falso.' })
+  isActive?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Listado de rutas locales o URLs de imágenes del producto. Ejemplo: /uploads/products/arroz-diana-500g.jpg',
+    example: ['/uploads/products/arroz-diana-500g.jpg'],
+  })
+  @IsOptional()
+  @IsArray({ message: 'Las imágenes deben enviarse como un arreglo.' })
+  @IsString({
+    each: true,
+    message: 'Cada imagen debe ser una ruta o URL válida en formato texto.',
+  })
+  images?: string[];
 }
