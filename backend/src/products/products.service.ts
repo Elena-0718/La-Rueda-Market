@@ -14,6 +14,14 @@ import { Category } from '../entities/category.entity';
 export class ProductsService {
   constructor(private readonly productsRepository: ProductsRepository) {}
 
+  private getErrorMessage(error: unknown, fallbackMessage: string): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return fallbackMessage;
+  }
+
   async getAllProducts() {
     return this.productsRepository.getAllProductsRepository();
   }
@@ -59,7 +67,7 @@ export class ProductsService {
       );
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al crear el producto.',
+        this.getErrorMessage(error, 'Error al crear el producto.'),
       );
     }
   }
@@ -94,9 +102,7 @@ export class ProductsService {
         await this.productsRepository.getProductByNameAdminRepository(dto.name);
 
       if (existingProduct && existingProduct.uuid !== uuid) {
-        throw new ConflictException(
-          'Ya existe otro producto con ese nombre.',
-        );
+        throw new ConflictException('Ya existe otro producto con ese nombre.');
       }
     }
 
@@ -108,7 +114,7 @@ export class ProductsService {
       );
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al actualizar el producto.',
+        this.getErrorMessage(error, 'Error al actualizar el producto.'),
       );
     }
   }
@@ -125,7 +131,7 @@ export class ProductsService {
       return await this.productsRepository.deleteProductRepository(product);
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al eliminar el producto.',
+        this.getErrorMessage(error, 'Error al eliminar el producto.'),
       );
     }
   }
@@ -142,7 +148,7 @@ export class ProductsService {
       return await this.productsRepository.activateProductRepository(product);
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al activar el producto.',
+        this.getErrorMessage(error, 'Error al activar el producto.'),
       );
     }
   }
