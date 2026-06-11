@@ -19,6 +19,10 @@ async function bootstrap() {
     prefix: '/upload/',
   });
 
+  app.useStaticAssets(join(__dirname, '..', 'upload'), {
+  prefix: '/uploads/',
+});
+
   /* =========================
      CORS
   ========================== */
@@ -83,6 +87,7 @@ async function bootstrap() {
   logger.log(`Servidor corriendo en http://localhost:${port}/api`);
   logger.log(`Swagger disponible en http://localhost:${port}/api/docs`);
   logger.log(`Archivos estáticos en http://localhost:${port}/upload/`);
+  logger.log(`Archivos estáticos también en http://localhost:${port}/uploads/`);
 }
 
 bootstrap();

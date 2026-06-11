@@ -2,7 +2,7 @@
 
 Plataforma web para la gestión de pedidos, abastecimiento programado y administración comercial de un supermercado rural ubicado en la vereda El Espinal, municipio de Los Santos, Santander.
 
-El sistema busca mejorar el acceso de la comunidad a productos básicos y frescos mediante una solución tecnológica orientada a pedidos en línea, domicilios, control administrativo y gestión de proveedores.
+El sistema busca mejorar el acceso de la comunidad a productos básicos y frescos mediante una solución tecnológica orientada a pedidos en línea, domicilios y control administrativo.
 
 ---
 
@@ -111,7 +111,8 @@ La aplicación se desarrollará bajo una arquitectura cliente-servidor separando
            ▼
 ┌─────────────────────┐
 │    PostgreSQL DB     │
-└─────────────────────┘
+
+ └─────────────────────┘
 ```
 
 ## Componentes principales
@@ -120,7 +121,7 @@ La aplicación se desarrollará bajo una arquitectura cliente-servidor separando
 Encargado de la interfaz gráfica, navegación, carrito de compras y consumo de la API.
 
 ### Backend
-Responsable de la lógica de negocio, autenticación, gestión de productos, pedidos, pagos y proveedores.
+Responsable de la lógica de negocio, autenticación, gestión de productos, pedidos, pagos.
 
 ### Base de datos
 Almacena la información de usuarios, productos, categorías, pedidos, pagos y domicilios.
@@ -134,182 +135,159 @@ Almacena la información de usuarios, productos, categorías, pedidos, pagos y d
 - Gestión de pedidos
 - Domicilios
 - Gestión de clientes
-- Gestión de proveedores
 - Panel administrativo
 - Pagos por Nequi y efectivo
 
----
 
-# Estado del proyecto
+## Estado actual del proyecto
 
-Proyecto en fase inicial de arquitectura y desarrollo.
+El proyecto se encuentra en una fase de desarrollo funcional, con backend y frontend integrados para los módulos principales definidos en este avance.
 
-## Prueba de endpoints iniciales
+En esta entrega se amplió la base construida en el avance anterior, incorporando la gestión de productos, categorías, usuarios, credenciales, autenticación y panel administrativo. Además, se implementó el frontend con React, Vite, Tailwind CSS y Axios, conectado a la API desarrollada en NestJS.
 
-La API se ejecuta localmente en:
+## Avance de funcionalidades implementadas
+
+### Backend
+
+En el backend se completaron y probaron los módulos necesarios para la operación base del sistema:
+
+* Módulo de autenticación, con inicio de sesión, registro y protección mediante JWT.
+* Módulo de credenciales, con recuperación de contraseña, cambio de contraseña, activación, desactivación y cambio de rol.
+* Módulo de usuarios, con consulta de perfil, actualización de datos y gestión administrativa.
+* Módulo de productos, con creación, consulta, actualización, activación, desactivación lógica y visualización administrativa.
+* Módulo de categorías, con creación, consulta, actualización, activación y desactivación lógica.
+* Módulo de uploads, para subir imágenes de productos y fotos de perfil de usuario.
+* Documentación de endpoints mediante Swagger.
+
+Los endpoints públicos permiten consultar el catálogo de productos y categorías activas. Los endpoints administrativos están protegidos por token y rol de administrador.
+
+### Frontend
+
+En el frontend se implementó la interfaz web del sistema, con separación entre experiencia de cliente y panel administrativo.
+
+#### Experiencia del cliente
+
+El usuario puede:
+
+* Consultar el catálogo de productos.
+* Buscar productos por nombre.
+* Filtrar productos por categoría.
+* Ver productos con imagen, precio, unidad de medida, disponibilidad y estado de pedido.
+* Registrarse como cliente con foto de perfil opcional.
+* Iniciar sesión.
+* Recuperar contraseña.
+* Consultar y actualizar su perfil.
+* Cambiar su foto de perfil.
+* Cambiar su contraseña.
+* Cerrar sesión de forma segura.
+
+Cuando un usuario intenta comprar o pedir un producto, el sistema lo redirige al login si no ha iniciado sesión. El módulo de compra, carrito y pedidos queda definido para el siguiente ciclo de desarrollo.
+
+#### Panel administrativo
+
+El administrador puede acceder a un panel diferenciado y protegido por rol. Desde este panel puede gestionar:
+
+**Productos**
+
+* Listar productos activos e inactivos.
+* Crear productos con imagen.
+* Editar información del producto.
+* Cambiar imagen del producto.
+* Activar productos.
+* Desactivar productos con borrado lógico.
+
+**Categorías**
+
+* Listar categorías activas e inactivas.
+* Crear categorías.
+* Editar categorías.
+* Activar categorías.
+* Desactivar categorías con borrado lógico.
+
+**Usuarios**
+
+* Listar usuarios registrados.
+* Ver estado del perfil de usuario.
+* Ver estado de la credencial.
+* Activar y desactivar cuentas.
+* Cambiar rol entre `CLIENT` y `ADMIN`.
+
+## Integración entre frontend y backend
+
+El frontend se comunica con el backend mediante Axios y consume los endpoints expuestos por la API REST. Las rutas protegidas utilizan el token JWT almacenado en el cliente para autorizar operaciones administrativas y funciones de usuario autenticado.
+
+La integración se validó en los siguientes flujos:
+
+* Registro de usuario con foto opcional.
+* Login de cliente y administrador.
+* Consulta del catálogo público.
+* Filtrado de productos por categoría.
+* Gestión de perfil del usuario.
+* Subida de imágenes al backend.
+* Creación y edición de productos con imagen.
+* Activación y desactivación de productos.
+* Gestión de categorías.
+* Activación, desactivación y cambio de rol de usuarios.
+
+## Gestión del repositorio
+
+El proyecto se trabajó en GitHub utilizando ramas y commits descriptivos. Para este avance se usó la rama `developer`, donde se integraron los cambios del backend y del frontend de forma progresiva.
+
+Se realizaron commits por funcionalidad, por ejemplo:
+
+* Ingreso de Datos- entidades product & category
+* Inicializar frontend con React Vite Tailwind y Axios
+* Organizar estructura base del frontend
+* Mostrar imagenes de productos desde el backend
+* Agregar busqueda y filtro por categorias
+
+
+## Funcionalidades pendientes para el siguiente avance
+
+Para el siguiente ciclo de desarrollo se plantea implementar los módulos transaccionales del sistema:
+
+* Carrito de compras.
+* Detalle del carrito.
+* Pedidos.
+* Detalle de pedidos.
+* Pagos.
+* Domicilios.
+
+
+Estos módulos permitirán completar el flujo de compra, desde la selección de productos hasta la entrega del pedido al cliente.
+
+## URLs de prueba local
+
+Backend:
+
+```bash
 http://localhost:3000/api
+```
 
-La documentación Swagger está disponible en:
+Documentación Swagger:
+
+```bash
 http://localhost:3000/api/docs
+```
 
-Usuario administrador de prueba
-Para probar rutas protegidas se crea automáticamente un usuario administrador inicial:
+Frontend:
+
+```bash
+http://localhost:5173
+```
+
+## Usuario administrador de prueba
+
+El sistema crea un usuario administrador inicial para probar las rutas protegidas:
+
+```text
 Celular: 3186844954
-Contraseña: Admin123*
+Contraseña: Admin1234*
 Rol: ADMIN
+```
 
-1. Verificar que la API está activa
+## Conclusión del avance
 
-Endpoint:GET /api
-Respuesta esperada:La Rueda Market API 🚀
+En este avance se logró una integración funcional entre backend y frontend, cumpliendo con los módulos principales del MVP. El sistema ya permite la navegación del cliente, la autenticación, la gestión de perfil, la administración de productos, categorías y usuarios, así como la carga de imágenes.
 
-2. Iniciar sesión como administrador
-
-Endpoint:POST /api/auth/login
-Body:{
-  "phone": "3186844954",
-  "password": "Admin123*"
-}
-a respuesta devuelve un token.
-En Swagger se debe hacer clic en Authorize y pegar el token.
-
-3. Registrar un cliente
-
-Endpoint:POST /api/auth/sign-up
-Body:{
-  "createCredentialDto": {
-    "phone": "3186847856",
-    "password": "Cliente123*",
-    "confirmPassword": "Cliente123*"
-  },
-  "createUserDto": {
-    "fullName": "Juan Lopez",
-    "phone": "3186847856",
-    "village": "Regadero",
-    "birthDate": "1986-05-20"
-  }
-}
-
-4. Iniciar sesión como cliente
-
-Endpoint:POST /api/auth/login
-Body:{
-  "phone": "3186847856",
-  "password": "Cliente123*"
-}
-
-5. Consultar usuarios registrados
-
-Requiere token de administrador.
-
-Endpoint:GET /api/users/all
-
-6. Consultar perfil autenticado
-
-Requiere token.
-Endpoint:GET /api/users/my-profile
-Este endpoint devuelve el perfil del usuario autenticado según el token enviado.
-
-7. Actualizar perfil autenticado
-
-Requiere token.
-Endpoint:PUT /api/users/update-my-profile
-Body:{
-  "fullName": "Juan Lopez Actualizado",
-  "phone": "3186847856",
-  "village": "El Espinal",
-  "birthDate": "1986-05-20"
-}
-
-8. Buscar usuario por UUID
-
-Requiere token de administrador.
-Endpoint:GET /api/users/find/{uuid}
-El {uuid} corresponde al identificador del usuario registrado.
-
-9. Actualizar usuario como administrador
-
-Requiere token de administrador.
-Endpoint:PUT /api/users/update/{uuid}
-Body: {
-  "fullName": "Cliente Actualizado por Admin",
-  "phone": "3186847856",
-  "village": "Regadero",
-  "birthDate": "1986-05-20",
-  "isActive": true
-}
-
-10. Desactivar usuario
-
-Requiere token de administrador.
-Endpoint:PUT /api/users/deactivate/{uuid}
-Permite desactivar lógicamente el perfil de usuario.
-
-11. Solicitar recuperación de contraseña
-
-Endpoint:POST /api/credentials/forgot-password
-Body: {
-  "phone": "3186847856"
-}
-
-12. Verificar código de recuperación
-
-Endpoint:POST /api/credentials/verify-reset-code
-Body: {
-  "phone": "3186847856",
-  "code": "123456"
-}El valor de code debe reemplazarse por el código generado en el paso anterior.
-
-13. Restablecer contraseña
-
-Endpoint:PATCH /api/credentials/reset-password
-Body: {
-  "phone": "3186847856",
-  "code": "123456",
-  "newPassword": "Nueva123*",
-  "confirmNewPassword": "Nueva123*"
-}
-
-14. Consultar credenciales
-
-Requiere token de administrador.
-Endpoint:GET /api/credentials/all
-También se puede filtrar por celular:GET /api/credentials/all?phone=3186847856
-
-15. Consultar credencial por UUID
-
-Requiere token de administrador.
-Endpoint:GET /api/credentials/{uuid}
-
-16. Cambiar contraseña estando autenticado
-
-Requiere token.
-Endpoint:PATCH /api/credentials/change-password/{uuid}
-Body: {
-  "currentPassword": "Cliente123*",
-  "newPassword": "Nueva123*",
-  "confirmNewPassword": "Nueva123*"
-}
-
-17. Cambiar rol
-
-Requiere token de administrador.
-Endpoint:PUT /api/credentials/change-role/{uuid}
-Body: {
-  "role": "ADMIN"
-}
-Roles disponibles:
-ADMIN
-CLIENT
-
-18. Desactivar cuenta
-
-Requiere token.
-Endpoint:DELETE /api/credentials/deactivate/{uuid}
-Permite desactivar una credencial y el perfil de usuario asociado.
-
-19. Activar cuenta
-
-Requiere token de administrador.
-Endpoint:PUT /api/credentials/activate/{uuid}
-Permite reactivar una cuenta previamente desactivada.
+El proyecto queda preparado para continuar con los módulos de carrito, pedidos, pagos y domicilios en la siguiente entrega.

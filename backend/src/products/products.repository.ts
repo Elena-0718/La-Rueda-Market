@@ -3,11 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 
 import { Product } from '../entities/product.entity';
-
+import { Category } from '../entities/category.entity';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
-import { Category } from '../entities/category.entity';
-
 
 @Injectable()
 export class ProductsRepository {
@@ -27,6 +25,13 @@ export class ProductsRepository {
     });
   }
 
+  async getAllProductsAdminRepository(): Promise<Product[]> {
+    return this.productsDB.find({
+      relations: ['category'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async getProductByIdRepository(uuid: string): Promise<Product | null> {
     return this.productsDB.findOne({
       where: {
@@ -37,11 +42,28 @@ export class ProductsRepository {
     });
   }
 
+  async getProductByIdAdminRepository(uuid: string): Promise<Product | null> {
+    return this.productsDB.findOne({
+      where: {
+        uuid,
+      },
+      relations: ['category'],
+    });
+  }
+
   async getProductByNameRepository(name: string): Promise<Product | null> {
     return this.productsDB.findOne({
       where: {
         name: ILike(name),
         isActive: true,
+      },
+    });
+  }
+
+  async getProductByNameAdminRepository(name: string): Promise<Product | null> {
+    return this.productsDB.findOne({
+      where: {
+        name: ILike(name),
       },
     });
   }
@@ -107,6 +129,10 @@ export class ProductsRepository {
       product.isFeatured = dto.isFeatured;
     }
 
+    if (dto.isActive !== undefined) {
+      product.isActive = dto.isActive;
+    }
+
     if (dto.images !== undefined) {
       product.images = dto.images;
     }
@@ -125,6 +151,16 @@ export class ProductsRepository {
 
     return {
       message: `El producto "${product.name}" fue desactivado correctamente.`,
+    };
+  }
+
+  async activateProductRepository(product: Product) {
+    product.isActive = true;
+
+    await this.productsDB.save(product);
+
+    return {
+      message: `El producto "${product.name}" fue activado correctamente.`,
     };
   }
 }

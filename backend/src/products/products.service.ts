@@ -14,8 +14,20 @@ import { Category } from '../entities/category.entity';
 export class ProductsService {
   constructor(private readonly productsRepository: ProductsRepository) {}
 
+  private getErrorMessage(error: unknown, fallbackMessage: string): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    return fallbackMessage;
+  }
+
   async getAllProducts() {
     return this.productsRepository.getAllProductsRepository();
+  }
+
+  async getAllProductsAdmin() {
+    return this.productsRepository.getAllProductsAdminRepository();
   }
 
   async getProductById(uuid: string) {
@@ -55,13 +67,14 @@ export class ProductsService {
       );
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al crear el producto.',
+        this.getErrorMessage(error, 'Error al crear el producto.'),
       );
     }
   }
 
   async updateProduct(uuid: string, dto: UpdateProductDto) {
-    const product = await this.productsRepository.getProductByIdRepository(uuid);
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
@@ -69,27 +82,27 @@ export class ProductsService {
 
     let category: Category | undefined;
 
-if (dto.categoryUuid) {
-  const foundCategory =
-    await this.productsRepository.getCategoryByIdRepository(dto.categoryUuid);
+    if (dto.categoryUuid) {
+      const foundCategory =
+        await this.productsRepository.getCategoryByIdRepository(
+          dto.categoryUuid,
+        );
 
-  if (!foundCategory) {
-    throw new NotFoundException(
-      'La categoría enviada no existe o está inactiva.',
-    );
-  }
+      if (!foundCategory) {
+        throw new NotFoundException(
+          'La categoría enviada no existe o está inactiva.',
+        );
+      }
 
-  category = foundCategory;
-}
+      category = foundCategory;
+    }
 
     if (dto.name && dto.name !== product.name) {
       const existingProduct =
-        await this.productsRepository.getProductByNameRepository(dto.name);
+        await this.productsRepository.getProductByNameAdminRepository(dto.name);
 
       if (existingProduct && existingProduct.uuid !== uuid) {
-        throw new ConflictException(
-          'Ya existe otro producto activo con ese nombre.',
-        );
+        throw new ConflictException('Ya existe otro producto con ese nombre.');
       }
     }
 
@@ -101,13 +114,14 @@ if (dto.categoryUuid) {
       );
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al actualizar el producto.',
+        this.getErrorMessage(error, 'Error al actualizar el producto.'),
       );
     }
   }
 
   async deleteProduct(uuid: string) {
-    const product = await this.productsRepository.getProductByIdRepository(uuid);
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
@@ -117,7 +131,24 @@ if (dto.categoryUuid) {
       return await this.productsRepository.deleteProductRepository(product);
     } catch (error) {
       throw new BadRequestException(
-        error.message || 'Error al eliminar el producto.',
+        this.getErrorMessage(error, 'Error al eliminar el producto.'),
+      );
+    }
+  }
+
+  async activateProduct(uuid: string) {
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
+
+    if (!product) {
+      throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
+    }
+
+    try {
+      return await this.productsRepository.activateProductRepository(product);
+    } catch (error) {
+      throw new BadRequestException(
+        this.getErrorMessage(error, 'Error al activar el producto.'),
       );
     }
   }

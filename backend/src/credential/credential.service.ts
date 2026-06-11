@@ -183,11 +183,7 @@ export class CredentialService {
       resetCodeExpiresAt,
     );
 
-    /*
-      Aquí luego conectas SMS o WhatsApp.
-      Por ahora retornamos el código para pruebas en desarrollo.
-      En producción NO debes retornar resetCode.
-    */
+
 
     return {
       message: 'Código de recuperación generado correctamente.',
