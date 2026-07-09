@@ -4,12 +4,14 @@ import {
   Entity,
   Index,
   JoinColumn,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 
 import { Credential } from './credential.entity';
+import { Cart } from './cart.entity';
 
 @Entity({ name: 'users' })
 export class User {
@@ -47,4 +49,7 @@ export class User {
   })
   @JoinColumn()
   credential: Credential;
+
+  @OneToMany(() => Cart, (cart) => cart.user)
+carts: Cart[];
 }

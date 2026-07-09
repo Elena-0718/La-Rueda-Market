@@ -23,6 +23,8 @@ import { ProductsModule } from './products/products.module';
 
 import typeorm from './config/typeorm';
 import { CategoriesModule } from './category/category.module';
+import { CartModule } from './cart/cart.module';
+import { CartDetailModule } from './cart-detail/cart-detail.module';
 
 @Module({
   imports: [
@@ -70,6 +72,8 @@ import { CategoriesModule } from './category/category.module';
     AuthModule,
     ProductsModule,
     CategoriesModule,
+    CartModule,
+    CartDetailModule,
   ],
 
   controllers: [AppController],

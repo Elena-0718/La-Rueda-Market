@@ -7,12 +7,14 @@ import {
   UpdateDateColumn,
   JoinColumn,
   Index,
+  OneToMany,
 } from 'typeorm';
 
 
 import { UnitMeasure } from '../enum/unit-measure.enum';
 import { AvailabilityType } from '../enum/availability-type.enum';
 import { Category } from './category.entity';
+import { CartDetail } from './cartDetail.entity';
 
 @Entity({ name: 'products' })
 @Index(['name'])
@@ -77,6 +79,9 @@ export class Product {
   })
   @JoinColumn({ name: 'category_uuid' })
   category: Category;
+
+  @OneToMany(() => CartDetail, (cartDetail) => cartDetail.product)
+cartDetails: CartDetail[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

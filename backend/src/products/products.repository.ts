@@ -3,11 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { ILike, Repository } from 'typeorm';
 
 import { Product } from '../entities/product.entity';
-
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Category } from '../entities/category.entity';
-
 
 @Injectable()
 export class ProductsRepository {
@@ -27,12 +25,26 @@ export class ProductsRepository {
     });
   }
 
+  async getAllProductsAdminRepository(): Promise<Product[]> {
+    return this.productsDB.find({
+      relations: ['category'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
   async getProductByIdRepository(uuid: string): Promise<Product | null> {
     return this.productsDB.findOne({
       where: {
         uuid,
         isActive: true,
       },
+      relations: ['category'],
+    });
+  }
+
+  async getProductByIdAdminRepository(uuid: string): Promise<Product | null> {
+    return this.productsDB.findOne({
+      where: { uuid },
       relations: ['category'],
     });
   }
@@ -111,9 +123,17 @@ export class ProductsRepository {
       product.images = dto.images;
     }
 
+  
+
     if (category) {
       product.category = category;
     }
+
+    return this.productsDB.save(product);
+  }
+
+  async activateProductRepository(product: Product): Promise<Product> {
+    product.isActive = true;
 
     return this.productsDB.save(product);
   }

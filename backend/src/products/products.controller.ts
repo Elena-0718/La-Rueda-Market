@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Put,
   Delete,
   Param,
   Body,
@@ -46,6 +47,30 @@ export class ProductsController {
   @HttpCode(HttpStatus.OK)
   getAll() {
     return this.productsService.getAllProducts();
+  }
+
+  @Get('admin/all')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RolesDecorator(Roles.ADMIN)
+  @ApiOperation({
+    summary: 'Obtener todos los productos, activos e inactivos | Admin',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista administrativa de productos obtenida correctamente.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autenticado.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'No autorizado.',
+  })
+  @HttpCode(HttpStatus.OK)
+  getAllAdmin() {
+    return this.productsService.getAllProductsAdmin();
   }
 
   @Get(':uuid')
@@ -142,21 +167,54 @@ export class ProductsController {
     return this.productsService.updateProduct(uuid, dto);
   }
 
+  @Put('activate/:uuid')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @RolesDecorator(Roles.ADMIN)
+  @ApiOperation({
+    summary: 'Activar producto | Admin',
+  })
+  @ApiParam({
+    name: 'uuid',
+    description: 'UUID del producto a activar.',
+    example: 'c31a34b7-8b9a-4e71-a29a-8c26f675a1c8',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Producto activado correctamente.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Producto no encontrado.',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'No autenticado.',
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'No autorizado.',
+  })
+  @HttpCode(HttpStatus.OK)
+  activate(@Param('uuid', ParseUUIDPipe) uuid: string) {
+    return this.productsService.activateProduct(uuid);
+  }
+
   @Delete(':uuid')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @RolesDecorator(Roles.ADMIN)
   @ApiOperation({
-    summary: 'Eliminar producto con borrado lógico | Admin',
+    summary: 'Desactivar producto con borrado lógico | Admin',
   })
   @ApiParam({
     name: 'uuid',
-    description: 'UUID del producto a eliminar.',
+    description: 'UUID del producto a desactivar.',
     example: 'c31a34b7-8b9a-4e71-a29a-8c26f675a1c8',
   })
   @ApiResponse({
     status: 200,
-    description: 'Producto eliminado correctamente.',
+    description: 'Producto desactivado correctamente.',
   })
   @ApiResponse({
     status: 404,
