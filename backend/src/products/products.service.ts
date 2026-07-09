@@ -23,11 +23,11 @@ export class ProductsService {
   }
 
   async getAllProducts() {
-    return await this.productsRepository.getAllProductsRepository();
+    return this.productsRepository.getAllProductsRepository();
   }
 
   async getAllProductsAdmin() {
-    return await this.productsRepository.getAllProductsAdminRepository();
+    return this.productsRepository.getAllProductsAdminRepository();
   }
 
   async getProductById(uuid: string) {
@@ -99,12 +99,10 @@ export class ProductsService {
 
     if (dto.name && dto.name !== product.name) {
       const existingProduct =
-        await this.productsRepository.getProductByNameRepository(dto.name);
+        await this.productsRepository.getProductByNameAdminRepository(dto.name);
 
       if (existingProduct && existingProduct.uuid !== uuid) {
-        throw new ConflictException(
-          'Ya existe otro producto activo con ese nombre.',
-        );
+        throw new ConflictException('Ya existe otro producto con ese nombre.');
       }
     }
 
@@ -117,29 +115,6 @@ export class ProductsService {
     } catch (error) {
       throw new BadRequestException(
         this.getErrorMessage(error, 'Error al actualizar el producto.'),
-      );
-    }
-  }
-
-  async activateProduct(uuid: string) {
-    const product =
-      await this.productsRepository.getProductByIdAdminRepository(uuid);
-
-    if (!product) {
-      throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
-    }
-
-    try {
-      const activatedProduct =
-        await this.productsRepository.activateProductRepository(product);
-
-      return {
-        message: 'Producto activado correctamente.',
-        product: activatedProduct,
-      };
-    } catch (error) {
-      throw new BadRequestException(
-        this.getErrorMessage(error, 'Error al activar el producto.'),
       );
     }
   }
@@ -157,6 +132,23 @@ export class ProductsService {
     } catch (error) {
       throw new BadRequestException(
         this.getErrorMessage(error, 'Error al eliminar el producto.'),
+      );
+    }
+  }
+
+  async activateProduct(uuid: string) {
+    const product =
+      await this.productsRepository.getProductByIdAdminRepository(uuid);
+
+    if (!product) {
+      throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
+    }
+
+    try {
+      return await this.productsRepository.activateProductRepository(product);
+    } catch (error) {
+      throw new BadRequestException(
+        this.getErrorMessage(error, 'Error al activar el producto.'),
       );
     }
   }

@@ -18,8 +18,8 @@ import {
 } from '@nestjs/swagger';
 
 import { CartService } from './cart.service';
-import { JwtAuthGuard } from 'src/auth/Guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/Guards/roles.guard';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { RolesGuard } from 'src/auth/guards/roles.guard';
 import { Roles } from 'src/enum/roles.enum';
 import { RolesDecorator } from 'src/decorators/roles.decorator';
 
