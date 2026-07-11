@@ -28,6 +28,8 @@ import typeorm from './config/typeorm';
 import { CategoriesModule } from './category/category.module';
 import { OrderModule } from './order/order.module';
 import { OrderDetailModule } from './order-detail/order-detail.module';
+import { PaymentModule } from './payment/payment.module';
+import { DeliveryModule } from './delivery/delivery.module';
 
 @Module({
   imports: [
@@ -79,6 +81,8 @@ import { OrderDetailModule } from './order-detail/order-detail.module';
     OrderDetailModule,
     CartModule,
     CartDetailModule,
+    PaymentModule,
+    DeliveryModule,
   ],
 
   controllers: [AppController],

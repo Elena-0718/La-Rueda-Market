@@ -13,6 +13,8 @@ import {
 
 import { User } from './users.entity';
 import { OrderDetail } from './orderDetail.entity';
+import { Payment } from './payment.entity';
+import { Delivery } from './delivery.entity';
 //import { Payment } from './payment.entity';
 //import { Delivery } from './delivery.entity';
 
@@ -155,9 +157,13 @@ export class Order {
   })
   orderDetails: OrderDetail[];
 
-  //@OneToOne(() => Payment, (payment) => payment.order, { nullable: true,cascade: ['insert'],})payment: Payment | null;//
+  @OneToOne(() => Payment, (payment) => payment.order, { 
+    nullable: true,cascade: ['insert'],})
+    payment: Payment | null;
 
-  //@OneToOne(() => Delivery, (delivery) => delivery.order, {nullable: true,cascade: ['insert'],})delivery: Delivery | null;
+  @OneToOne(() => Delivery, (delivery) => delivery.order, {
+    nullable: true,cascade: ['insert'],})
+    delivery: Delivery | null;
 
   /* =========================
      AUDITORÍA
