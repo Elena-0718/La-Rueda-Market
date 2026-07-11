@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { Cart, CartStatus } from 'src/entities/cart.entity';
-import { CartDetail } from 'src/entities/cartDetail.entity';
-import { User } from 'src/entities/users.entity';
+import { Cart, CartStatus } from '../entities/cart.entity';
+import { CartDetail } from '../entities/cartDetail.entity';
+import { User } from '../entities/users.entity';
 
 @Injectable()
 export class CartRepository {

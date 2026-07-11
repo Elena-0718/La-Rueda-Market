@@ -20,10 +20,10 @@ import {
   ApiParam,
 } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { RolesGuard } from 'src/auth/guards/roles.guard';
-import { RolesDecorator } from 'src/decorators/roles.decorator';
-import { Roles } from 'src/enum/roles.enum';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { RolesDecorator } from '../decorators/roles.decorator';
+import { Roles } from '../enum/roles.enum';
 
 import { CartDetailService } from './cart-detail.service';
 import { AddProductDto } from './dtos/add-product.dto';

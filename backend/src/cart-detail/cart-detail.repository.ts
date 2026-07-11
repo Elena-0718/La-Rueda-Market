@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { CartDetail } from 'src/entities/cartDetail.entity';
-import { Cart } from 'src/entities/cart.entity';
-import { Product } from 'src/entities/product.entity';
-import { CartRepository } from 'src/cart/cart.repository';
+import { CartDetail } from '../entities/cartDetail.entity';
+import { Cart } from '../entities/cart.entity';
+import { Product } from '../entities/product.entity';
+import { CartRepository } from '../cart/cart.repository';
 import { AddProductDto } from './dtos/add-product.dto';
 
 @Injectable()

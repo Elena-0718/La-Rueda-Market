@@ -15,6 +15,7 @@ import { UnitMeasure } from '../enum/unit-measure.enum';
 import { AvailabilityType } from '../enum/availability-type.enum';
 import { Category } from './category.entity';
 import { CartDetail } from './cartDetail.entity';
+import { OrderDetail } from './orderDetail.entity';
 
 @Entity({ name: 'products' })
 @Index(['name'])
@@ -82,6 +83,9 @@ export class Product {
 
   @OneToMany(() => CartDetail, (cartDetail) => cartDetail.product)
 cartDetails: CartDetail[];
+
+@OneToMany(() => OrderDetail, (orderDetail) => orderDetail.product)
+orderDetails: OrderDetail[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

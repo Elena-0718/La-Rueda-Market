@@ -20,9 +20,14 @@ import { User } from './entities/users.entity';
 import { Credential } from './entities/credential.entity';
 import { ProductsModule } from './products/products.module';
 
+import { CartModule } from './cart/cart.module';
+import { CartDetailModule } from './cart-detail/cart-detail.module';
+
 
 import typeorm from './config/typeorm';
 import { CategoriesModule } from './category/category.module';
+import { OrderModule } from './order/order.module';
+import { OrderDetailModule } from './order-detail/order-detail.module';
 
 @Module({
   imports: [
@@ -70,6 +75,10 @@ import { CategoriesModule } from './category/category.module';
     AuthModule,
     ProductsModule,
     CategoriesModule,
+    OrderModule,
+    OrderDetailModule,
+    CartModule,
+    CartDetailModule,
   ],
 
   controllers: [AppController],

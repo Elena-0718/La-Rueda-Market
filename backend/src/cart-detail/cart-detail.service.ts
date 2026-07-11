@@ -4,8 +4,8 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
-import { CartRepository } from 'src/cart/cart.repository';
-import { ProductsRepository } from 'src/products/products.repository';
+import { CartRepository } from '../cart/cart.repository';
+import { ProductsRepository } from '../products/products.repository';
 import { CartDetailRepository } from './cart-detail.repository';
 import { AddProductDto } from './dtos/add-product.dto';
 import { UpdateProductQuantityDto } from './dtos/update-cartdetail.dto';

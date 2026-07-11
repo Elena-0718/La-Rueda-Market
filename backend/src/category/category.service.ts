@@ -10,7 +10,6 @@ import { CategoriesRepository } from './category.repository';
 import { CreateCategoryDto } from './dtos/create-category.dto';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
 
-
 @Injectable()
 export class CategoriesService {
   constructor(
@@ -41,7 +40,7 @@ export class CategoriesService {
 
     if (!category) {
       throw new NotFoundException(
-        `No se encontró una categoría activa con el ID ${uuid}.`,
+        `NO SE ENCONTRÓ UNA CATEGORÍA ACTIVA CON EL ID ${uuid}.`,
       );
     }
 
@@ -54,7 +53,7 @@ export class CategoriesService {
 
     if (existingByName) {
       throw new ConflictException(
-        'Ya existe una categoría con ese nombre.',
+        'YA EXISTE UNA CATEGORÍA CON ESE NOMBRE.',
       );
     }
 
@@ -65,7 +64,7 @@ export class CategoriesService {
 
     if (existingBySlug) {
       throw new ConflictException(
-        'Ya existe una categoría con un slug equivalente.',
+        'YA EXISTE UNA CATEGORÍA CON UN SLUG EQUIVALENTE.',
       );
     }
 
@@ -77,10 +76,13 @@ export class CategoriesService {
         sortOrder: dto.sortOrder ?? 0,
         isActive: true,
       });
-    } catch (error) {
-      throw new BadRequestException(
-        error.message || 'Ocurrió un error al crear la categoría.',
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'OCURRIÓ UN ERROR AL CREAR LA CATEGORÍA.';
+
+      throw new BadRequestException(message);
     }
   }
 
@@ -95,7 +97,7 @@ export class CategoriesService {
 
     if (!category) {
       throw new NotFoundException(
-        `No se encontró ninguna categoría con el ID ${uuid}.`,
+        `NO SE ENCONTRÓ NINGUNA CATEGORÍA CON EL ID ${uuid}.`,
       );
     }
 
@@ -107,7 +109,7 @@ export class CategoriesService {
 
       if (existingByName && existingByName.uuid !== uuid) {
         throw new ConflictException(
-          'Ya existe otra categoría con ese nombre.',
+          'YA EXISTE OTRA CATEGORÍA CON ESE NOMBRE.',
         );
       }
 
@@ -118,7 +120,7 @@ export class CategoriesService {
 
       if (existingBySlug && existingBySlug.uuid !== uuid) {
         throw new ConflictException(
-          'Ya existe otra categoría con un slug equivalente.',
+          'YA EXISTE OTRA CATEGORÍA CON UN SLUG EQUIVALENTE.',
         );
       }
 
@@ -143,10 +145,13 @@ export class CategoriesService {
         category,
         dataToUpdate,
       );
-    } catch (error) {
-      throw new BadRequestException(
-        error.message || 'Ocurrió un error al actualizar la categoría.',
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'OCURRIÓ UN ERROR AL ACTUALIZAR LA CATEGORÍA.';
+
+      throw new BadRequestException(message);
     }
   }
 
@@ -156,7 +161,7 @@ export class CategoriesService {
 
     if (!category) {
       throw new NotFoundException(
-        `No se encontró una categoría activa con el ID ${uuid}.`,
+        `NO SE ENCONTRÓ UNA CATEGORÍA ACTIVA CON EL ID ${uuid}.`,
       );
     }
 
@@ -164,10 +169,13 @@ export class CategoriesService {
       return await this.categoriesRepository.deleteCategoryRepository(
         category,
       );
-    } catch (error) {
-      throw new BadRequestException(
-        error.message || 'Ocurrió un error al eliminar la categoría.',
-      );
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'OCURRIÓ UN ERROR AL ELIMINAR LA CATEGORÍA.';
+
+      throw new BadRequestException(message);
     }
   }
 }
