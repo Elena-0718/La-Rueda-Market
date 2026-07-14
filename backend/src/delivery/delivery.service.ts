@@ -10,7 +10,10 @@ import { OrderRepository } from '../order/order.repository';
 import { CreateDeliveryDto } from './dtos/create-delivery.dto';
 import { UpdateDeliveryStatusDto } from './dtos/update-delivery-status.dto';
 import { DeliveryStatus } from '../entities/delivery.entity';
-import { OrderStatus } from '../entities/order.entity';
+import {
+  FulfillmentType,
+  OrderStatus,
+} from '../entities/order.entity';
 import { Roles } from '../enum/roles.enum';
 
 @Injectable()
@@ -54,6 +57,12 @@ export class DeliveryService {
 
     if (!order) {
       throw new NotFoundException('Pedido no encontrado.');
+    }
+
+    if (order.fulfillmentType === FulfillmentType.PICKUP) {
+      throw new BadRequestException(
+        'No se puede crear domicilio para un pedido que será recogido en tienda.',
+      );
     }
 
     if (order.status === OrderStatus.CANCELLED) {

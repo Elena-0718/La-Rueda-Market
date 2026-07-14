@@ -6,13 +6,19 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { Order, OrderStatus } from '../entities/order.entity';
+import {
+  FulfillmentType,
+  Order,
+  OrderStatus,
+} from '../entities/order.entity';
 import { OrderDetail } from '../entities/orderDetail.entity';
 import { CartStatus } from '../entities/cart.entity';
 import { OrderRepository } from './order.repository';
 import { CartRepository } from '../cart/cart.repository';
 import { UpdateOrderDto } from './dtos/update-order.dto';
 import { CreateOrderDto } from './dtos/create-order.dto';
+
+const SCHEDULED_DELIVERY_COST = 2000;
 
 @Injectable()
 export class OrderService {
@@ -37,6 +43,50 @@ export class OrderService {
     }
 
     return userUuid;
+  }
+
+  /* =========================
+     UTILIDAD: CALCULAR COSTO DE ENTREGA
+  ========================= */
+  private getDeliveryCostByFulfillmentType(
+    fulfillmentType: FulfillmentType,
+  ): number {
+    if (fulfillmentType === FulfillmentType.PICKUP) {
+      return 0;
+    }
+
+    if (fulfillmentType === FulfillmentType.SCHEDULED_DELIVERY) {
+      return SCHEDULED_DELIVERY_COST;
+    }
+
+    throw new BadRequestException('Forma de entrega no válida.');
+  }
+
+  /* =========================
+     UTILIDAD: VALIDAR DATOS DE ENTREGA
+  ========================= */
+  private validateFulfillmentData(dto: CreateOrderDto) {
+    if (dto.fulfillmentType === FulfillmentType.SCHEDULED_DELIVERY) {
+      if (!dto.shippingAddress?.trim()) {
+        throw new BadRequestException(
+          'Para domicilio programado debes confirmar la dirección, vereda o referencia de entrega.',
+        );
+      }
+
+      if (!dto.shippingPhone?.trim()) {
+        throw new BadRequestException(
+          'Para domicilio programado debes confirmar un celular de contacto.',
+        );
+      }
+    }
+
+    if (dto.fulfillmentType === FulfillmentType.PICKUP) {
+      if (!dto.shippingPhone?.trim()) {
+        throw new BadRequestException(
+          'Para recoger en tienda debes confirmar un celular de contacto.',
+        );
+      }
+    }
   }
 
   /* =========================
@@ -105,6 +155,8 @@ export class OrderService {
   ) {
     const userUuid = this.getUserUuidFromRequest(req);
 
+    this.validateFulfillmentData(dto);
+
     const cart =
       await this.cartRepository.getActiveCartByUserUuidRepository(userUuid);
 
@@ -114,7 +166,10 @@ export class OrderService {
       );
     }
 
-    const deliveryCost = Number(dto.deliveryCost || 0);
+    const fulfillmentType = dto.fulfillmentType;
+    const deliveryCost =
+      this.getDeliveryCostByFulfillmentType(fulfillmentType);
+
     const subtotal = Number(cart.subtotal || 0);
     const tax = Number(cart.tax || 0);
     const discount = Number(cart.discount || 0);
@@ -130,10 +185,20 @@ export class OrderService {
     order.total = total;
     order.currency = cart.currency || 'COP';
     order.status = OrderStatus.CREATED;
+    order.fulfillmentType = fulfillmentType;
 
-    order.shippingAddress = dto.shippingAddress || null;
-    order.shippingPhone = dto.shippingPhone || null;
-    order.deliveryNotes = dto.deliveryNotes || null;
+    if (fulfillmentType === FulfillmentType.PICKUP) {
+      order.shippingAddress = 'RECOGE EN TIENDA';
+      order.shippingPhone = dto.shippingPhone?.trim() || null;
+      order.deliveryNotes =
+        dto.deliveryNotes?.trim() || 'Cliente recoge en tienda.';
+    }
+
+    if (fulfillmentType === FulfillmentType.SCHEDULED_DELIVERY) {
+      order.shippingAddress = dto.shippingAddress?.trim() || null;
+      order.shippingPhone = dto.shippingPhone?.trim() || null;
+      order.deliveryNotes = dto.deliveryNotes?.trim() || null;
+    }
 
     order.orderDetails = cart.cartDetails.map((cartDetail) => {
       const orderDetail = new OrderDetail();

@@ -154,7 +154,7 @@ function CartPage() {
               </h1>
 
               <p className="mt-2 text-stone-700">
-                REVISA LOS PRODUCTOS ANTES DE CREAR TU PEDIDO.
+                REVISA LOS PRODUCTOS ANTES DE FINALIZAR TU PEDIDO.
               </p>
             </div>
 
@@ -328,6 +328,7 @@ function CartPage() {
                     <span className="text-xl font-black text-green-900">
                       TOTAL
                     </span>
+
                     <span className="text-xl font-black text-green-900">
                       {formatCurrency(cart?.total)}
                     </span>
@@ -345,7 +346,7 @@ function CartPage() {
 
               <button
                 type="button"
-                onClick={() => alert('EL SIGUIENTE PASO SERÁ CREAR EL PEDIDO.')}
+                onClick={() => navigate('/finalizar-pedido')}
                 className="mt-3 w-full rounded-2xl bg-amber-500 px-5 py-3 font-bold text-white hover:bg-amber-600"
               >
                 FINALIZAR PEDIDO

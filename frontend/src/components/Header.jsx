@@ -9,7 +9,9 @@ import {
 function Header() {
   const navigate = useNavigate()
   const location = useLocation()
+
   const [user, setUser] = useState(null)
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false)
 
   useEffect(() => {
     const syncUser = () => {
@@ -25,9 +27,14 @@ function Header() {
     }
   }, [location.pathname])
 
+  useEffect(() => {
+    setIsUserMenuOpen(false)
+  }, [location.pathname])
+
   const handleLogout = () => {
     clearAuthSession()
     setUser(null)
+    setIsUserMenuOpen(false)
     navigate('/login')
   }
 
@@ -37,6 +44,16 @@ function Header() {
         ? 'bg-green-800 text-white'
         : 'text-green-900 hover:bg-green-100'
     }`
+
+  const getFirstName = () => {
+    const name = user?.name || user?.fullName || 'MI CUENTA'
+    return name.split(' ')[0].toUpperCase()
+  }
+
+  const getInitial = () => {
+    const name = user?.name || user?.fullName || 'U'
+    return name.charAt(0).toUpperCase()
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-green-100 bg-white/95 backdrop-blur">
@@ -52,19 +69,13 @@ function Header() {
         </Link>
 
         <nav className="flex flex-wrap items-center gap-3">
-          <NavLink
-            to="/"
-            className={getNavLinkClass}
-          >
+          <NavLink to="/" className={getNavLinkClass}>
             PRODUCTOS
           </NavLink>
 
           {!user && (
             <>
-              <NavLink
-                to="/login"
-                className={getNavLinkClass}
-              >
+              <NavLink to="/login" className={getNavLinkClass}>
                 INGRESAR
               </NavLink>
 
@@ -86,10 +97,7 @@ function Header() {
           {user && (
             <>
               {user.role === 'ADMIN' && (
-                <NavLink
-                  to="/admin"
-                  className={getNavLinkClass}
-                >
+                <NavLink to="/admin" className={getNavLinkClass}>
                   PANEL ADMIN
                 </NavLink>
               )}
@@ -109,20 +117,51 @@ function Header() {
                 </NavLink>
               )}
 
-              <NavLink
-                to="/perfil"
-                className={getNavLinkClass}
-              >
-                MI PERFIL
-              </NavLink>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen((current) => !current)}
+                  className="flex items-center gap-2 rounded-full border border-green-200 bg-white px-3 py-2 font-bold text-green-900 hover:bg-green-50"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-green-800 text-sm font-black text-white">
+                    {getInitial()}
+                  </span>
 
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-full border border-red-200 px-4 py-2 font-semibold text-red-700 hover:bg-red-50"
-              >
-                CERRAR SESIÓN
-              </button>
+                  <span>{getFirstName()}</span>
+
+                  <span className="text-xs">
+                    {isUserMenuOpen ? '▲' : '▼'}
+                  </span>
+                </button>
+
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-3 w-56 overflow-hidden rounded-3xl border border-green-100 bg-white shadow-xl">
+                    <NavLink
+                      to="/perfil"
+                      className="block px-5 py-4 font-bold text-green-900 hover:bg-green-50"
+                    >
+                      MI PERFIL
+                    </NavLink>
+
+                    {user.role === 'CLIENT' && (
+                      <NavLink
+                        to="/mis-pedidos"
+                        className="block px-5 py-4 font-bold text-green-900 hover:bg-green-50"
+                      >
+                        MIS PEDIDOS
+                      </NavLink>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="block w-full px-5 py-4 text-left font-bold text-red-700 hover:bg-red-50"
+                    >
+                      CERRAR SESIÓN
+                    </button>
+                  </div>
+                )}
+              </div>
             </>
           )}
         </nav>
