@@ -7,6 +7,7 @@ import RegisterPage from '../pages/RegisterPage'
 import ForgotPasswordPage from '../pages/ForgotPasswordPage'
 import CartPage from '../pages/CartPage'
 import CheckoutPage from '../pages/CheckoutPage'
+import PaymentPage from '../pages/PaymentPage'
 import ProfilePage from '../pages/ProfilePage'
 import MyOrdersPage from '../pages/MyOrdersPage'
 import OrderDetailPage from '../pages/OrderDetailPage'
@@ -44,6 +45,15 @@ function AppRouter() {
           element={
             <ProtectedRoute>
               <CheckoutPage />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/pagar-pedido/:uuid"
+          element={
+            <ProtectedRoute>
+              <PaymentPage />
             </ProtectedRoute>
           }
         />

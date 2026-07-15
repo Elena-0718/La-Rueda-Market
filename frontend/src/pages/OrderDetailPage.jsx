@@ -48,23 +48,40 @@ const getPaymentLabel = (payment) => {
     CANCELLED: 'PAGO CANCELADO',
   }
 
-  return statuses[payment.status] || payment.status
+  return statuses[payment.status] || payment.status || 'SIN ESTADO'
 }
 
-const getDeliveryLabel = (delivery) => {
-  if (!delivery) {
-    return 'SIN DOMICILIO ASIGNADO'
+const getDeliveryLabel = (order) => {
+  if (order?.fulfillmentType === 'PICKUP') {
+    return 'RECOGE EN TIENDA'
   }
 
-  const statuses = {
-    PENDING: 'DOMICILIO PENDIENTE',
-    PREPARING: 'PREPARANDO DOMICILIO',
-    ON_THE_WAY: 'DOMICILIO EN CAMINO',
-    DELIVERED: 'ENTREGADO',
-    CANCELLED: 'DOMICILIO CANCELADO',
+  if (order?.fulfillmentType === 'SCHEDULED_DELIVERY') {
+    if (!order.delivery) {
+      return 'DOMICILIO PROGRAMADO'
+    }
+
+    const statuses = {
+      PENDING: 'DOMICILIO PENDIENTE',
+      PREPARING: 'PREPARANDO DOMICILIO',
+      ON_THE_WAY: 'DOMICILIO EN CAMINO',
+      DELIVERED: 'ENTREGADO',
+      CANCELLED: 'DOMICILIO CANCELADO',
+    }
+
+    return statuses[order.delivery.status] || order.delivery.status
   }
 
-  return statuses[delivery.status] || delivery.status
+  return 'NO DEFINIDO'
+}
+
+const getFulfillmentLabel = (fulfillmentType) => {
+  const labels = {
+    PICKUP: 'RECOGER EN TIENDA',
+    SCHEDULED_DELIVERY: 'DOMICILIO PROGRAMADO',
+  }
+
+  return labels[fulfillmentType] || 'NO DEFINIDO'
 }
 
 function OrderDetailPage() {
@@ -204,7 +221,16 @@ function OrderDetailPage() {
 
               <div className="mt-5 space-y-3 text-stone-700">
                 <p>
-                  <span className="font-bold text-green-900">DIRECCIÓN: </span>
+                  <span className="font-bold text-green-900">
+                    FORMA DE ENTREGA:{' '}
+                  </span>
+                  {getFulfillmentLabel(order?.fulfillmentType)}
+                </p>
+
+                <p>
+                  <span className="font-bold text-green-900">
+                    DIRECCIÓN / REFERENCIA:{' '}
+                  </span>
                   {order?.shippingAddress || 'NO REGISTRADA'}
                 </p>
 
@@ -248,11 +274,11 @@ function OrderDetailPage() {
 
                 <div className="rounded-2xl bg-stone-50 p-4">
                   <p className="text-sm font-bold text-stone-500">
-                    DOMICILIO
+                    ENTREGA
                   </p>
 
                   <p className="mt-1 font-black text-green-900">
-                    {getDeliveryLabel(order?.delivery)}
+                    {getDeliveryLabel(order)}
                   </p>
                 </div>
               </div>
@@ -282,7 +308,11 @@ function OrderDetailPage() {
               </div>
 
               <div className="flex justify-between gap-4">
-                <span className="font-semibold">DOMICILIO</span>
+                <span className="font-semibold">
+                  {order?.fulfillmentType === 'PICKUP'
+                    ? 'RECOGIDA EN TIENDA'
+                    : 'DOMICILIO PROGRAMADO'}
+                </span>
 
                 <span className="font-bold">
                   {formatCurrency(order?.deliveryCost)}
@@ -310,13 +340,13 @@ function OrderDetailPage() {
               </div>
             </div>
 
-            {!order?.payment && (
+            {!order?.payment && order?.status !== 'CANCELLED' && (
               <button
                 type="button"
-                onClick={() => alert('EL SIGUIENTE MÓDULO SERÁ REGISTRAR PAGO.')}
+                onClick={() => navigate(`/pagar-pedido/${order.uuid}`)}
                 className="mt-6 w-full rounded-2xl bg-amber-500 px-5 py-3 font-bold text-white hover:bg-amber-600"
               >
-                REGISTRAR PAGO
+                ELEGIR FORMA DE PAGO
               </button>
             )}
 

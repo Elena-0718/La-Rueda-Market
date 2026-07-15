@@ -47,23 +47,31 @@ const getPaymentLabel = (payment) => {
     CANCELLED: 'PAGO CANCELADO',
   }
 
-  return statuses[payment.status] || payment.status
+  return statuses[payment.status] || payment.status || 'SIN ESTADO'
 }
 
-const getDeliveryLabel = (delivery) => {
-  if (!delivery) {
-    return 'SIN DOMICILIO ASIGNADO'
+const getDeliveryLabel = (order) => {
+  if (order.fulfillmentType === 'PICKUP') {
+    return 'RECOGE EN TIENDA'
   }
 
-  const statuses = {
-    PENDING: 'DOMICILIO PENDIENTE',
-    PREPARING: 'PREPARANDO DOMICILIO',
-    ON_THE_WAY: 'DOMICILIO EN CAMINO',
-    DELIVERED: 'ENTREGADO',
-    CANCELLED: 'DOMICILIO CANCELADO',
+  if (order.fulfillmentType === 'SCHEDULED_DELIVERY') {
+    if (!order.delivery) {
+      return 'DOMICILIO PROGRAMADO'
+    }
+
+    const statuses = {
+      PENDING: 'DOMICILIO PENDIENTE',
+      PREPARING: 'PREPARANDO DOMICILIO',
+      ON_THE_WAY: 'DOMICILIO EN CAMINO',
+      DELIVERED: 'ENTREGADO',
+      CANCELLED: 'DOMICILIO CANCELADO',
+    }
+
+    return statuses[order.delivery.status] || order.delivery.status
   }
 
-  return statuses[delivery.status] || delivery.status
+  return 'NO DEFINIDO'
 }
 
 function MyOrdersPage() {
@@ -118,7 +126,7 @@ function MyOrdersPage() {
           </h1>
 
           <p className="mt-3 text-stone-700">
-            AQUÍ PUEDES VER TUS COMPRAS, EL ESTADO DEL PAGO Y EL DOMICILIO.
+            AQUÍ PUEDES VER TUS COMPRAS, EL ESTADO DEL PAGO Y LA FORMA DE ENTREGA.
           </p>
         </header>
 
@@ -216,11 +224,11 @@ function MyOrdersPage() {
 
                   <div className="rounded-2xl bg-stone-50 p-4">
                     <p className="text-sm font-bold text-stone-500">
-                      DOMICILIO
+                      ENTREGA
                     </p>
 
                     <p className="mt-1 font-black text-green-900">
-                      {getDeliveryLabel(order.delivery)}
+                      {getDeliveryLabel(order)}
                     </p>
                   </div>
                 </div>
@@ -234,13 +242,13 @@ function MyOrdersPage() {
                     VER DETALLE
                   </button>
 
-                  {!order.payment && (
+                  {!order.payment && order.status !== 'CANCELLED' && (
                     <button
                       type="button"
-                      onClick={() => alert('EL SIGUIENTE MÓDULO SERÁ REGISTRAR PAGO.')}
+                      onClick={() => navigate(`/pagar-pedido/${order.uuid}`)}
                       className="rounded-2xl border-2 border-amber-500 px-5 py-3 font-bold text-amber-700 hover:bg-amber-50"
                     >
-                      REGISTRAR PAGO
+                      ELEGIR FORMA DE PAGO
                     </button>
                   )}
                 </div>

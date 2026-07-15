@@ -167,8 +167,8 @@ function CheckoutPage() {
       setSuccessMessage('PEDIDO CREADO CORRECTAMENTE.')
 
       setTimeout(() => {
-        navigate(`/mis-pedidos/${createdOrder.uuid}`)
-      }, 700)
+  navigate(`/pagar-pedido/${createdOrder.uuid}`)
+}, 700)
     } catch (error) {
       setErrorMessage(
         error?.response?.data?.message ||
