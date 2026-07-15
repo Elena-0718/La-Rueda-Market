@@ -1,75 +1,100 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 function AdminDashboardPage() {
+  const navigate = useNavigate()
+
+  const modules = [
+    {
+      title: 'PEDIDOS Y ENTREGAS',
+      description:
+        'REVISA PEDIDOS, CONFIRMA PAGOS Y GESTIONA DOMICILIOS PROGRAMADOS DESDE UN SOLO LUGAR.',
+      buttonText: 'GESTIONAR PEDIDOS',
+      path: '/admin/pedidos',
+      enabled: true,
+    },
+    {
+      title: 'PRODUCTOS',
+      description:
+        'CREA, EDITA Y ACTIVA LOS PRODUCTOS QUE SE MUESTRAN EN LA TIENDA.',
+      buttonText: 'GESTIONAR PRODUCTOS',
+      path: '/admin/productos',
+      enabled: true,
+    },
+    {
+      title: 'CATEGORÍAS',
+      description:
+        'ORGANIZA LOS PRODUCTOS POR SECCIONES CLARAS PARA EL CLIENTE.',
+      buttonText: 'GESTIONAR CATEGORÍAS',
+      path: '/admin/categorias',
+      enabled: true,
+    },
+    {
+      title: 'USUARIOS',
+      description:
+        'REVISA CLIENTES, ADMINISTRADORES Y ESTADO DE LAS CUENTAS.',
+      buttonText: 'GESTIONAR USUARIOS',
+      path: '/admin/usuarios',
+      enabled: true,
+    },
+    {
+      title: 'INVENTARIO',
+      description:
+        'CONTROLA ENTRADAS, SALIDAS, STOCK FÍSICO, VENCIMIENTOS Y ALERTAS.',
+      buttonText: 'PRÓXIMAMENTE',
+      path: '/admin/inventario',
+      enabled: false,
+    },
+  ]
+
   return (
     <main className="p-6">
       <section className="mx-auto max-w-6xl">
         <header className="rounded-3xl bg-white p-8 shadow">
-          <p className="text-sm font-semibold tracking-widest text-green-700">
+          <p className="text-sm font-bold tracking-[0.25em] text-green-700">
             LA RUEDA MARKET
           </p>
 
-          <h1 className="mt-2 text-3xl font-bold text-green-900">
+          <h1 className="mt-2 text-4xl font-black text-green-900">
             PANEL ADMINISTRATIVO
           </h1>
 
-          <p className="mt-3 text-stone-700">
-            DESDE AQUÍ PODRÁS GESTIONAR PRODUCTOS, CATEGORÍAS Y USUARIOS.
+          <p className="mt-3 max-w-3xl text-stone-700">
+            DESDE AQUÍ PUEDES GESTIONAR LA OPERACIÓN DE LA TIENDA:
+            PEDIDOS, PRODUCTOS, CATEGORÍAS, USUARIOS E INVENTARIO.
           </p>
         </header>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <article className="rounded-3xl bg-white p-6 shadow">
-            <h2 className="text-2xl font-bold text-green-900">
-              PRODUCTOS
-            </h2>
-
-            <p className="mt-3 text-stone-700">
-              CONSULTA Y ADMINISTRA LOS PRODUCTOS DISPONIBLES EN LA TIENDA.
-            </p>
-
-            <Link
-              to="/admin/productos"
-              className="mt-5 inline-block rounded-2xl bg-green-800 px-5 py-3 font-bold text-white"
+        <section className="mt-8 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {modules.map((module) => (
+            <article
+              key={module.title}
+              className="flex min-h-[210px] flex-col justify-between rounded-3xl bg-white p-6 shadow"
             >
-              GESTIONAR PRODUCTOS
-            </Link>
-          </article>
+              <div>
+                <h2 className="text-2xl font-black text-green-900">
+                  {module.title}
+                </h2>
 
-          <article className="rounded-3xl bg-white p-6 shadow">
-            <h2 className="text-2xl font-bold text-green-900">
-              CATEGORÍAS
-            </h2>
+                <p className="mt-3 leading-relaxed text-stone-700">
+                  {module.description}
+                </p>
+              </div>
 
-            <p className="mt-3 text-stone-700">
-              ORGANIZA LOS PRODUCTOS POR SECCIONES CLARAS PARA EL CLIENTE.
-            </p>
-
-            <Link
-              to="/admin/categorias"
-              className="mt-5 inline-block rounded-2xl bg-green-800 px-5 py-3 font-bold text-white"
-            >
-              GESTIONAR CATEGORÍAS
-            </Link>
-          </article>
-
-          <article className="rounded-3xl bg-white p-6 shadow">
-            <h2 className="text-2xl font-bold text-green-900">
-              USUARIOS
-            </h2>
-
-            <p className="mt-3 text-stone-700">
-              REVISA CLIENTES, ADMINISTRADORES Y ESTADO DE LAS CUENTAS.
-            </p>
-
-            <Link
-              to="/admin/usuarios"
-              className="mt-5 inline-block rounded-2xl bg-green-800 px-5 py-3 font-bold text-white"
-            >
-              GESTIONAR USUARIOS
-            </Link>
-          </article>
-        </div>
+              <button
+                type="button"
+                disabled={!module.enabled}
+                onClick={() => navigate(module.path)}
+                className={`mt-6 rounded-2xl px-5 py-3 font-black ${
+                  module.enabled
+                    ? 'bg-green-800 text-white hover:bg-green-900'
+                    : 'cursor-not-allowed bg-stone-200 text-stone-500'
+                }`}
+              >
+                {module.buttonText}
+              </button>
+            </article>
+          ))}
+        </section>
       </section>
     </main>
   )

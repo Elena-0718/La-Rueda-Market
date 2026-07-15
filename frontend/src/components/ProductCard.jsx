@@ -16,15 +16,6 @@ const getUnitLabel = (unitMeasure) => {
   return units[unitMeasure] || unitMeasure?.toUpperCase() || 'UNIDAD'
 }
 
-const getAvailabilityLabel = (availabilityType) => {
-  const availability = {
-    daily: 'DISPONIBLE HOY',
-    scheduled: 'BAJO PEDIDO',
-  }
-
-  return availability[availabilityType] || 'DISPONIBLE'
-}
-
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -79,11 +70,7 @@ function ProductCard({ product }) {
       return 'AGREGAR OTRO'
     }
 
-    if (product.availabilityType === 'scheduled') {
-      return 'PEDIR'
-    }
-
-    return 'COMPRAR'
+    return 'AGREGAR AL CARRITO'
   }
 
   return (
@@ -101,10 +88,6 @@ function ProductCard({ product }) {
           <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
             {product.category?.name}
           </span>
-
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-bold text-stone-700">
-            {getAvailabilityLabel(product.availabilityType)}
-          </span>
         </div>
 
         <h3 className="mt-3 text-xl font-bold text-green-900">
@@ -119,22 +102,8 @@ function ProductCard({ product }) {
           {formatCurrency(product.price)}
         </p>
 
-        <div className="mt-2 flex flex-wrap gap-2 text-sm font-semibold text-stone-600">
+        <div className="mt-2 text-sm font-semibold text-stone-600">
           <span>POR: {getUnitLabel(product.unitMeasure)}</span>
-
-          {product.availabilityType === 'daily' && (
-            <>
-              <span>·</span>
-              <span>DISPONIBLES: {product.stock}</span>
-            </>
-          )}
-
-          {product.availabilityType === 'scheduled' && (
-            <>
-              <span>·</span>
-              <span>SE ENTREGA BAJO PEDIDO</span>
-            </>
-          )}
         </div>
 
         {successMessage && (
