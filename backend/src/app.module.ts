@@ -30,6 +30,8 @@ import { OrderModule } from './order/order.module';
 import { OrderDetailModule } from './order-detail/order-detail.module';
 import { PaymentModule } from './payment/payment.module';
 import { DeliveryModule } from './delivery/delivery.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { InventoryMovementModule } from './inventory-movement/inventory-movement.module';
 
 @Module({
   imports: [
@@ -83,6 +85,8 @@ import { DeliveryModule } from './delivery/delivery.module';
     CartDetailModule,
     PaymentModule,
     DeliveryModule,
+    InventoryModule,
+    InventoryMovementModule,
   ],
 
   controllers: [AppController],
