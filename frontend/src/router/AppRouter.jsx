@@ -22,6 +22,7 @@ import AdminEditProductPage from '../pages/admin/AdminEditProductPage'
 import AdminCreateCategoryPage from '../pages/admin/AdminCreateCategoryPage'
 import AdminEditCategoryPage from '../pages/admin/AdminEditCategoryPage'
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage'
+import AdminInventoryPage from '../pages/admin/AdminInventoryPage'
 
 function AppRouter() {
   return (
@@ -108,6 +109,8 @@ function AppRouter() {
         <Route path="categorias/:uuid/editar" element={<AdminEditCategoryPage />} />
 
         <Route path="usuarios" element={<AdminUsersPage />} />
+
+        <Route path="inventario" element={<AdminInventoryPage />} />
       </Route>
     </Routes>
   )

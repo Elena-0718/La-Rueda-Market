@@ -37,13 +37,13 @@ function AdminDashboardPage() {
       enabled: true,
     },
     {
-      title: 'INVENTARIO',
-      description:
-        'CONTROLA ENTRADAS, SALIDAS, STOCK FÍSICO, VENCIMIENTOS Y ALERTAS.',
-      buttonText: 'PRÓXIMAMENTE',
-      path: '/admin/inventario',
-      enabled: false,
-    },
+  title: 'INVENTARIO',
+  description:
+    'CONTROLA ENTRADAS, SALIDAS, STOCK FÍSICO, VENCIMIENTOS Y ALERTAS.',
+  buttonText: 'GESTIONAR INVENTARIO',
+  path: '/admin/inventario',
+  enabled: true,
+},
   ]
 
   return (

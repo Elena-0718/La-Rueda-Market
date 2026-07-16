@@ -42,9 +42,11 @@ export class InventoryService {
       currentStock: createInventoryDto.currentStock ?? 0,
       minimumStock: createInventoryDto.minimumStock ?? 0,
       isTracked: createInventoryDto.isTracked ?? true,
-      isPerishable: createInventoryDto.isPerishable ?? false,
+      isPerishable:
+        createInventoryDto.isPerishable === true ||
+        Boolean(createInventoryDto.expirationDate),
       expirationDate: createInventoryDto.expirationDate
-        ? new Date(createInventoryDto.expirationDate)
+        ? this.parseDateOnly(createInventoryDto.expirationDate)
         : null,
       expirationAlertDays: createInventoryDto.expirationAlertDays ?? 7,
       supplierName: createInventoryDto.supplierName?.trim() || null,
@@ -127,8 +129,12 @@ export class InventoryService {
 
     if (updateInventoryDto.expirationDate !== undefined) {
       inventory.expirationDate = updateInventoryDto.expirationDate
-        ? new Date(updateInventoryDto.expirationDate)
+        ? this.parseDateOnly(updateInventoryDto.expirationDate)
         : null;
+
+      if (updateInventoryDto.expirationDate) {
+        inventory.isPerishable = true;
+      }
     }
 
     if (updateInventoryDto.expirationAlertDays !== undefined) {
@@ -216,7 +222,7 @@ export class InventoryService {
       purchasePrice: createMovementDto.purchasePrice ?? null,
       supplierName: createMovementDto.supplierName?.trim() || null,
       expirationDate: createMovementDto.expirationDate
-        ? new Date(createMovementDto.expirationDate)
+        ? this.parseDateOnly(createMovementDto.expirationDate)
         : null,
       orderUuid: createMovementDto.orderUuid?.trim() || null,
       notes: createMovementDto.notes?.trim() || null,
@@ -235,8 +241,12 @@ export class InventoryService {
 
     if (createMovementDto.expirationDate !== undefined) {
       inventory.expirationDate = createMovementDto.expirationDate
-        ? new Date(createMovementDto.expirationDate)
+        ? this.parseDateOnly(createMovementDto.expirationDate)
         : null;
+
+      if (createMovementDto.expirationDate) {
+        inventory.isPerishable = true;
+      }
     }
 
     await this.inventoryRepository.saveInventory(inventory);
@@ -352,27 +362,23 @@ export class InventoryService {
   }
 
   private isExpired(inventory: any) {
-    if (!inventory.isPerishable || !inventory.expirationDate) {
+    if (!inventory.expirationDate) {
       return false;
     }
 
     const today = this.clearTime(new Date());
-    const expirationDate = this.clearTime(new Date(inventory.expirationDate));
+    const expirationDate = this.parseDateOnly(inventory.expirationDate);
 
     return expirationDate < today;
   }
 
   private isNearExpiration(inventory: any) {
-    if (
-      !inventory.isPerishable ||
-      !inventory.expirationDate ||
-      this.isExpired(inventory)
-    ) {
+    if (!inventory.expirationDate || this.isExpired(inventory)) {
       return false;
     }
 
     const today = this.clearTime(new Date());
-    const expirationDate = this.clearTime(new Date(inventory.expirationDate));
+    const expirationDate = this.parseDateOnly(inventory.expirationDate);
 
     const alertDate = new Date(today);
     alertDate.setDate(
@@ -400,6 +406,16 @@ export class InventoryService {
     }
 
     return 'NORMAL';
+  }
+
+  private parseDateOnly(value: string | Date) {
+    if (value instanceof Date) {
+      return this.clearTime(value);
+    }
+
+    const [year, month, day] = String(value).split('T')[0].split('-').map(Number);
+
+    return new Date(year, month - 1, day);
   }
 
   private clearTime(date: Date) {
