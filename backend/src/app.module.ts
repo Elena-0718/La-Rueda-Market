@@ -32,6 +32,7 @@ import { PaymentModule } from './payment/payment.module';
 import { DeliveryModule } from './delivery/delivery.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { InventoryMovementModule } from './inventory-movement/inventory-movement.module';
+import { RecipesModule } from './recipes/recipes.module';
 
 @Module({
   imports: [
@@ -87,6 +88,7 @@ import { InventoryMovementModule } from './inventory-movement/inventory-movement
     DeliveryModule,
     InventoryModule,
     InventoryMovementModule,
+    RecipesModule,
   ],
 
   controllers: [AppController],

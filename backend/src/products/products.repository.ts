@@ -77,6 +77,33 @@ export class ProductsRepository {
     });
   }
 
+  async findMainProductUuidsWithActiveRecipes(): Promise<string[]> {
+    const rows = await this.productsDB.manager.query(`
+      SELECT DISTINCT rmp.product_uuid AS uuid
+      FROM recipe_main_products rmp
+      INNER JOIN recipes r ON r.uuid = rmp.recipe_uuid
+      WHERE r.is_active = true
+    `);
+
+    return rows.map((row: { uuid: string }) => row.uuid);
+  }
+
+  async productHasActiveRecipes(productUuid: string): Promise<boolean> {
+    const rows = await this.productsDB.manager.query(
+      `
+        SELECT 1
+        FROM recipe_main_products rmp
+        INNER JOIN recipes r ON r.uuid = rmp.recipe_uuid
+        WHERE r.is_active = true
+        AND rmp.product_uuid = $1
+        LIMIT 1
+      `,
+      [productUuid],
+    );
+
+    return rows.length > 0;
+  }
+
   async createProductRepository(
     dto: CreateProductDto,
     category: Category,

@@ -44,6 +44,15 @@ function AdminDashboardPage() {
   path: '/admin/inventario',
   enabled: true,
 },
+
+{
+  title: 'RECETAS',
+  description:
+    'CREA RECETAS CON VIDEO Y PRODUCTOS RECOMENDADOS PARA IMPULSAR LA VENTA.',
+  buttonText: 'GESTIONAR RECETAS',
+  path: '/admin/recetas',
+  enabled: true,
+},
   ]
 
   return (

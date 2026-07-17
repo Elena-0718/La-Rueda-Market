@@ -23,6 +23,10 @@ import AdminCreateCategoryPage from '../pages/admin/AdminCreateCategoryPage'
 import AdminEditCategoryPage from '../pages/admin/AdminEditCategoryPage'
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage'
 import AdminInventoryPage from '../pages/admin/AdminInventoryPage'
+import RecipesPage from '../pages/RecipesPage'
+import RecipeDetailPage from '../pages/RecipeDetailPage'
+import ProductRecipeBuyPage from '../pages/ProductRecipeBuyPage'
+import AdminRecipesPage from '../pages/admin/AdminRecipesPage'
 
 function AppRouter() {
   return (
@@ -32,6 +36,10 @@ function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
+
+        <Route path="/recetas" element={<RecipesPage />} />
+        <Route path="/recetas/:uuid" element={<RecipeDetailPage />} />
+        <Route path="/productos/:uuid/comprar" element={<ProductRecipeBuyPage />} />
 
         <Route
           path="/carrito"
@@ -97,6 +105,8 @@ function AppRouter() {
         }
       >
         <Route index element={<AdminDashboardPage />} />
+
+        <Route path="recetas" element={<AdminRecipesPage />} />
 
        <Route path="pedidos" element={<AdminOrdersPage />} />
 

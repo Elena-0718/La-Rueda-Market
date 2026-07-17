@@ -9,6 +9,11 @@ import { ProductsRepository } from './products.repository';
 import { CreateProductDto } from './dtos/create-product.dto';
 import { UpdateProductDto } from './dtos/update-product.dto';
 import { Category } from '../entities/category.entity';
+import { Product } from '../entities/product.entity';
+
+type ProductWithRecipesFlag = Product & {
+  hasRecipes: boolean;
+};
 
 @Injectable()
 export class ProductsService {
@@ -22,22 +27,27 @@ export class ProductsService {
     return fallbackMessage;
   }
 
-  async getAllProducts() {
-    return this.productsRepository.getAllProductsRepository();
+  async getAllProducts(): Promise<ProductWithRecipesFlag[]> {
+    const products = await this.productsRepository.getAllProductsRepository();
+
+    return this.addHasRecipesToProducts(products);
   }
 
-  async getAllProductsAdmin() {
-    return this.productsRepository.getAllProductsAdminRepository();
+  async getAllProductsAdmin(): Promise<ProductWithRecipesFlag[]> {
+    const products =
+      await this.productsRepository.getAllProductsAdminRepository();
+
+    return this.addHasRecipesToProducts(products);
   }
 
-  async getProductById(uuid: string) {
+  async getProductById(uuid: string): Promise<ProductWithRecipesFlag> {
     const product = await this.productsRepository.getProductByIdRepository(uuid);
 
     if (!product) {
       throw new NotFoundException(`Producto con ID ${uuid} no encontrado.`);
     }
 
-    return product;
+    return this.addHasRecipesToProduct(product);
   }
 
   async createProduct(dto: CreateProductDto) {
@@ -151,5 +161,32 @@ export class ProductsService {
         this.getErrorMessage(error, 'Error al activar el producto.'),
       );
     }
+  }
+
+  private async addHasRecipesToProducts(
+    products: Product[],
+  ): Promise<ProductWithRecipesFlag[]> {
+    const productUuidsWithRecipes =
+      await this.productsRepository.findMainProductUuidsWithActiveRecipes();
+
+    const productUuidsWithRecipesSet = new Set(productUuidsWithRecipes);
+
+    return products.map((product) => ({
+      ...product,
+      hasRecipes: productUuidsWithRecipesSet.has(product.uuid),
+    }));
+  }
+
+  private async addHasRecipesToProduct(
+    product: Product,
+  ): Promise<ProductWithRecipesFlag> {
+    const hasRecipes = await this.productsRepository.productHasActiveRecipes(
+      product.uuid,
+    );
+
+    return {
+      ...product,
+      hasRecipes,
+    };
   }
 }

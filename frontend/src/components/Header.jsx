@@ -73,6 +73,10 @@ function Header() {
             PRODUCTOS
           </NavLink>
 
+          <NavLink to="/recetas" className={getNavLinkClass}>
+            RECETAS
+          </NavLink>
+
           {!user && (
             <>
               <NavLink to="/login" className={getNavLinkClass}>

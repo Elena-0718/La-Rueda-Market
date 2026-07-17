@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { addProductToCart } from '../api/cartDetailsService'
 import { isAuthenticated } from '../features/auth/authStorage'
 
@@ -54,7 +54,12 @@ function ProductCard({ product }) {
         error.response?.data?.message ||
         'NO SE PUDO AGREGAR EL PRODUCTO AL CARRITO.'
 
-      setErrorMessage(backendMessage)
+      setErrorMessage(
+        Array.isArray(backendMessage)
+          ? backendMessage.join(' ')
+          : backendMessage,
+      )
+
       console.error(error)
     } finally {
       setIsAdding(false)
@@ -126,6 +131,15 @@ function ProductCard({ product }) {
         >
           {getButtonText()}
         </button>
+
+        {product.hasRecipes === true && (
+          <Link
+            to={`/recetas?productUuid=${product.uuid}`}
+            className="mt-3 block w-full rounded-2xl border border-green-800 px-5 py-3 text-center text-lg font-bold text-green-900 hover:bg-green-50"
+          >
+            VER RECETAS
+          </Link>
+        )}
       </div>
     </article>
   )
