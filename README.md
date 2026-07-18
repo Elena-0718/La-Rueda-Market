@@ -1,293 +1,667 @@
-# La Rueda Market
+# LA RUEDA MARKET
 
-Plataforma web para la gestión de pedidos, abastecimiento programado y administración comercial de un supermercado rural ubicado en la vereda El Espinal, municipio de Los Santos, Santander.
+La Rueda Market es una plataforma web desarrollada como Producto Mínimo Viable (PMV) para apoyar la operación de un supermercado rural.
 
-El sistema busca mejorar el acceso de la comunidad a productos básicos y frescos mediante una solución tecnológica orientada a pedidos en línea, domicilios y control administrativo.
+El sistema permite a los clientes consultar productos, agregarlos al carrito, crear pedidos, seleccionar forma de entrega, registrar pagos y ver recetas recomendadas desde productos principales como carnes.  
+Desde el panel administrativo, permite gestionar productos, categorías, usuarios, pedidos, pagos, domicilios, inventario y recetas.
 
 ---
 
-# Tecnologías utilizadas
+## Objetivo del proyecto
 
-## Backend
+Desarrollar una solución web funcional que integre el proceso de compra y administración de La Rueda Market:
+
+```text
+Cliente → Catálogo → Carrito → Pedido → Pago → Entrega
+```
+
+Además, el proyecto incluye control administrativo de inventario y recetas comerciales para apoyar la venta cruzada de productos.
+
+---
+
+## Tecnologías utilizadas
+
+### Backend
+
 - Node.js
+- NestJS
 - TypeScript
-- Express.js / NestJS
 - PostgreSQL
-- JWT Authentication
+- TypeORM
+- JWT
+- Swagger
 
-## Frontend
+### Frontend
+
 - React
 - Vite
 - Tailwind CSS
 - Axios
+- React Router DOM
 
-## Herramientas
+### Herramientas
+
 - Git
 - GitHub
 - Visual Studio Code
+- PostgreSQL / pgAdmin
 
 ---
 
-# Estructura del proyecto
+## Estructura del proyecto
 
-```bash
-LA-RUEDA-MARKET
+```text
+La-Rueda-Market
 │
 ├── backend
+│   ├── src
+│   │   ├── auth
+│   │   ├── users
+│   │   ├── credentials
+│   │   ├── products
+│   │   ├── categories
+│   │   ├── cart
+│   │   ├── cart-detail
+│   │   ├── orders
+│   │   ├── order-detail
+│   │   ├── payments
+│   │   ├── deliveries
+│   │   ├── inventory
+│   │   ├── inventory-movement
+│   │   ├── recipes
+│   │   └── entities
+│   └── package.json
+│
 ├── frontend
-├── docs
+│   ├── public
+│   ├── src
+│   │   ├── api
+│   │   ├── components
+│   │   ├── features
+│   │   ├── layouts
+│   │   ├── pages
+│   │   └── routes
+│   └── package.json
+│
 ├── README.md
-└── .gitignore
+├── .gitignore
+└── LICENSE
 ```
 
 ---
 
-# Instalación del proyecto
+## Instalación y ejecución
 
-## Clonar repositorio
+### Clonar el repositorio
 
 ```bash
 git clone https://github.com/Elena-0718/La-Rueda-Market.git
-```
-
-## Ingresar al proyecto
-
-```bash
 cd La-Rueda-Market
 ```
 
 ---
 
-# Instalación backend
+## Backend
+
+### Instalar dependencias
 
 ```bash
 cd backend
 npm install
 ```
 
+### Configurar variables de entorno
+
+Crear un archivo `.env` dentro de la carpeta `backend`.
+
+```env
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=tu_password
+DB_NAME=la_rueda_market
+
+JWT_SECRET=tu_clave_secreta
+JWT_EXPIRES_IN=1d
+```
+
+### Ejecutar backend
+
+```bash
+npm run start:dev
+```
+
+Backend:
+
+```text
+http://localhost:3000/api
+```
+
+Swagger:
+
+```text
+http://localhost:3000/api/docs
+```
+ 
 ---
 
-# Instalación frontend
+## Frontend
+
+### Instalar dependencias
 
 ```bash
 cd frontend
 npm install
 ```
 
----
-
-# Ejecución del proyecto
-
-## Backend
-
-```bash
-npm run start:dev
-```
-
-## Frontend
+### Ejecutar frontend
 
 ```bash
 npm run dev
 ```
 
----
-
-# Arquitectura inicial del sistema
-
-La aplicación se desarrollará bajo una arquitectura cliente-servidor separando frontend, backend y base de datos para facilitar escalabilidad, mantenimiento y modularidad.
-
-```txt
-┌─────────────────────┐
-│     Frontend Web     │
-│   React + Tailwind   │
-└──────────┬──────────┘
-           │ HTTP API
-           ▼
-┌─────────────────────┐
-│      Backend API     │
-│ Node.js + TypeScript │
-└──────────┬──────────┘
-           │ ORM
-           ▼
-┌─────────────────────┐
-│    PostgreSQL DB     │
-
- └─────────────────────┘
-```
-
-## Componentes principales
-
-### Frontend
-Encargado de la interfaz gráfica, navegación, carrito de compras y consumo de la API.
-
-### Backend
-Responsable de la lógica de negocio, autenticación, gestión de productos, pedidos, pagos.
-
-### Base de datos
-Almacena la información de usuarios, productos, categorías, pedidos, pagos y domicilios.
-
----
-
-# Funcionalidades iniciales
-
-- Catálogo de productos
-- Carrito de compras
-- Gestión de pedidos
-- Domicilios
-- Gestión de clientes
-- Panel administrativo
-- Pagos por Nequi y efectivo
-
-
-## Estado actual del proyecto
-
-El proyecto se encuentra en una fase de desarrollo funcional, con backend y frontend integrados para los módulos principales definidos en este avance.
-
-En esta entrega se amplió la base construida en el avance anterior, incorporando la gestión de productos, categorías, usuarios, credenciales, autenticación y panel administrativo. Además, se implementó el frontend con React, Vite, Tailwind CSS y Axios, conectado a la API desarrollada en NestJS.
-
-## Avance de funcionalidades implementadas
-
-### Backend
-
-En el backend se completaron y probaron los módulos necesarios para la operación base del sistema:
-
-* Módulo de autenticación, con inicio de sesión, registro y protección mediante JWT.
-* Módulo de credenciales, con recuperación de contraseña, cambio de contraseña, activación, desactivación y cambio de rol.
-* Módulo de usuarios, con consulta de perfil, actualización de datos y gestión administrativa.
-* Módulo de productos, con creación, consulta, actualización, activación, desactivación lógica y visualización administrativa.
-* Módulo de categorías, con creación, consulta, actualización, activación y desactivación lógica.
-* Módulo de uploads, para subir imágenes de productos y fotos de perfil de usuario.
-* Documentación de endpoints mediante Swagger.
-
-Los endpoints públicos permiten consultar el catálogo de productos y categorías activas. Los endpoints administrativos están protegidos por token y rol de administrador.
-
-### Frontend
-
-En el frontend se implementó la interfaz web del sistema, con separación entre experiencia de cliente y panel administrativo.
-
-#### Experiencia del cliente
-
-El usuario puede:
-
-* Consultar el catálogo de productos.
-* Buscar productos por nombre.
-* Filtrar productos por categoría.
-* Ver productos con imagen, precio, unidad de medida, disponibilidad y estado de pedido.
-* Registrarse como cliente con foto de perfil opcional.
-* Iniciar sesión.
-* Recuperar contraseña.
-* Consultar y actualizar su perfil.
-* Cambiar su foto de perfil.
-* Cambiar su contraseña.
-* Cerrar sesión de forma segura.
-
-Cuando un usuario intenta comprar o pedir un producto, el sistema lo redirige al login si no ha iniciado sesión. El módulo de compra, carrito y pedidos queda definido para el siguiente ciclo de desarrollo.
-
-#### Panel administrativo
-
-El administrador puede acceder a un panel diferenciado y protegido por rol. Desde este panel puede gestionar:
-
-**Productos**
-
-* Listar productos activos e inactivos.
-* Crear productos con imagen.
-* Editar información del producto.
-* Cambiar imagen del producto.
-* Activar productos.
-* Desactivar productos con borrado lógico.
-
-**Categorías**
-
-* Listar categorías activas e inactivas.
-* Crear categorías.
-* Editar categorías.
-* Activar categorías.
-* Desactivar categorías con borrado lógico.
-
-**Usuarios**
-
-* Listar usuarios registrados.
-* Ver estado del perfil de usuario.
-* Ver estado de la credencial.
-* Activar y desactivar cuentas.
-* Cambiar rol entre `CLIENT` y `ADMIN`.
-
-## Integración entre frontend y backend
-
-El frontend se comunica con el backend mediante Axios y consume los endpoints expuestos por la API REST. Las rutas protegidas utilizan el token JWT almacenado en el cliente para autorizar operaciones administrativas y funciones de usuario autenticado.
-
-La integración se validó en los siguientes flujos:
-
-* Registro de usuario con foto opcional.
-* Login de cliente y administrador.
-* Consulta del catálogo público.
-* Filtrado de productos por categoría.
-* Gestión de perfil del usuario.
-* Subida de imágenes al backend.
-* Creación y edición de productos con imagen.
-* Activación y desactivación de productos.
-* Gestión de categorías.
-* Activación, desactivación y cambio de rol de usuarios.
-
-## Gestión del repositorio
-
-El proyecto se trabajó en GitHub utilizando ramas y commits descriptivos. Para este avance se usó la rama `developer`, donde se integraron los cambios del backend y del frontend de forma progresiva.
-
-Se realizaron commits por funcionalidad, por ejemplo:
-
-* Ingreso de Datos- entidades product & category
-* Inicializar frontend con React Vite Tailwind y Axios
-* Organizar estructura base del frontend
-* Mostrar imagenes de productos desde el backend
-* Agregar busqueda y filtro por categorias
-
-
-## Funcionalidades pendientes para el siguiente avance
-
-Para el siguiente ciclo de desarrollo se plantea implementar los módulos transaccionales del sistema:
-
-* Carrito de compras.
-* Detalle del carrito.
-* Pedidos.
-* Detalle de pedidos.
-* Pagos.
-* Domicilios.
-
-
-Estos módulos permitirán completar el flujo de compra, desde la selección de productos hasta la entrega del pedido al cliente.
-
-## URLs de prueba local
-
-Backend:
-
-```bash
-http://localhost:3000/api
-```
-
-Documentación Swagger:
-
-```bash
-http://localhost:3000/api/docs
-```
-
 Frontend:
 
-```bash
+```text
 http://localhost:5173
 ```
 
-## Usuario administrador de prueba
+---
 
-El sistema crea un usuario administrador inicial para probar las rutas protegidas:
+## Roles del sistema
+
+### CLIENT
+
+Usuario cliente de la tienda.
+
+Puede:
+
+- Registrarse e iniciar sesión.
+- Consultar productos.
+- Buscar y filtrar por categoría.
+- Agregar productos al carrito.
+- Modificar cantidades.
+- Crear pedidos.
+- Seleccionar recogida en tienda o domicilio programado.
+- Registrar pagos.
+- Consultar sus pedidos.
+- Ver recetas recomendadas.
+- Elegir productos desde una receta y agregarlos al carrito.
+
+### ADMIN
+
+Usuario administrador del sistema.
+
+Puede:
+
+- Gestionar productos.
+- Gestionar categorías.
+- Gestionar usuarios.
+- Gestionar pedidos.
+- Confirmar o rechazar pagos.
+- Gestionar domicilios.
+- Controlar inventario.
+- Registrar movimientos de inventario.
+- Crear y administrar recetas.
+
+---
+
+# Módulos principales
+
+## Autenticación y usuarios
+
+Permite registro, inicio de sesión, cierre de sesión, protección con JWT y control de acceso por roles.
+
+Incluye:
+
+- Registro de clientes.
+- Login.
+- Perfil de usuario.
+- Gestión administrativa de usuarios.
+- Roles `CLIENT` y `ADMIN`.
+
+---
+
+## Productos y categorías
+
+Permite gestionar el catálogo de la tienda.
+
+Incluye:
+
+- Creación y edición de productos.
+- Activación y desactivación de productos.
+- Asociación de productos a categorías.
+- Carga de imágenes.
+- Búsqueda por nombre.
+- Filtro por categoría.
+- Visualización de productos activos para clientes.
+
+Categorías usadas:
+
+- Abarrotes.
+- Aseo.
+- Frutas y verduras.
+- Carnes.
+- Papelería e impresiones.
+
+---
+
+## Carrito
+
+Permite que el cliente construya su compra antes de generar el pedido.
+
+Incluye:
+
+- Agregar productos.
+- Actualizar cantidades.
+- Eliminar productos.
+- Vaciar carrito.
+- Calcular subtotales y total.
+
+Flujo:
 
 ```text
-Celular: 3186844954
-Contraseña: Admin1234*
-Rol: ADMIN
+Producto → Agregar al carrito → Mi carrito → Finalizar pedido
 ```
 
-## Conclusión del avance
+---
 
-En este avance se logró una integración funcional entre backend y frontend, cumpliendo con los módulos principales del MVP. El sistema ya permite la navegación del cliente, la autenticación, la gestión de perfil, la administración de productos, categorías y usuarios, así como la carga de imágenes.
+## Pedidos y entregas
 
-El proyecto queda preparado para continuar con los módulos de carrito, pedidos, pagos y domicilios en la siguiente entrega.
+Permite convertir el carrito en un pedido y seleccionar la forma de entrega.
+
+Formas de entrega:
+
+```text
+PICKUP
+El cliente recoge en tienda.
+Costo de domicilio: $0.
+
+SCHEDULED_DELIVERY
+Domicilio programado según ruta.
+Costo de domicilio: $2.000.
+```
+
+Incluye:
+
+- Creación de pedidos.
+- Consulta de pedidos del cliente.
+- Consulta de detalle del pedido.
+- Cancelación de pedidos.
+- Gestión administrativa de estados.
+- Gestión de entregas para domicilio programado.
+
+---
+
+## Pagos
+
+Permite registrar y administrar pagos de pedidos.
+
+Formas de pago:
+
+```text
+CASH
+Pago en efectivo.
+
+TRANSFER
+Pago por transferencia.
+```
+
+Estados:
+
+```text
+PENDING
+CONFIRMED
+REJECTED
+CANCELLED
+```
+
+Incluye:
+
+- Registro de pago por cliente.
+- Referencia para transferencia.
+- Confirmación de pago por administrador.
+- Rechazo de pago.
+- Consulta de pagos.
+
+---
+
+## Inventario
+
+Permite controlar el stock físico de los productos desde el panel administrativo.
+
+Incluye:
+
+- Crear inventario por producto.
+- Registrar stock actual.
+- Definir stock mínimo.
+- Registrar proveedor.
+- Registrar precio de compra.
+- Marcar producto perecedero.
+- Definir fecha de vencimiento.
+- Consultar resumen de inventario.
+
+Alertas:
+
+```text
+NORMAL
+BAJO STOCK
+PRÓXIMO A VENCER
+VENCIDO
+SIN CONTROL
+```
+
+El stock exacto es administrativo y no se muestra al cliente.
+
+---
+
+## Movimientos de inventario
+
+Permite registrar entradas y salidas de productos.
+
+Tipos:
+
+```text
+IN
+Entrada de inventario.
+
+OUT
+Salida de inventario.
+```
+
+Motivos principales:
+
+```text
+SUPPLIER_PURCHASE
+STORE_SALE
+ONLINE_SALE
+LOSS
+EXPIRATION
+POSITIVE_ADJUSTMENT
+NEGATIVE_ADJUSTMENT
+RETURN
+```
+
+Regla importante:
+
+```text
+No se permite registrar una salida mayor al stock actual.
+```
+
+---
+
+## Recetas
+
+El módulo de recetas permite recomendar preparaciones desde productos principales y apoyar la venta cruzada.
+
+Incluye:
+
+- Crear recetas desde administrador.
+- Agregar video.
+- Definir título, descripción, categoría, dificultad, tiempo y porciones.
+- Agregar notas de ingredientes.
+- Agregar pasos de preparación.
+- Agregar ingredientes extra.
+- Agregar consejos.
+- Activar o desactivar recetas.
+- Marcar recetas como destacadas.
+- Asociar productos principales.
+- Asociar productos recomendados.
+
+### Productos principales
+
+Son los productos que activan el botón:
+
+```text
+VER RECETAS
+```
+
+Ejemplo:
+
+```text
+Carne molida
+Pechuga de pollo
+Carne de cerdo
+```
+
+### Productos recomendados
+
+Son los productos que aparecen dentro de la receta para que el cliente pueda elegirlos y agregarlos al carrito.
+
+Ejemplo:
+
+```text
+Carne molida
+Pan hamburguesa
+Tomate
+Cebolla
+Queso
+```
+
+Flujo:
+
+```text
+Producto principal → Ver recetas → Receta → Producto recomendado → Elegir cantidad → Agregar al carrito
+```
+
+---
+
+# Experiencia de usuario
+
+La interfaz fue diseñada para ser clara y fácil de usar.
+
+Incluye:
+
+- Navegación simple.
+- Header con acceso a productos, recetas, carrito y usuario.
+- Panel administrativo separado.
+- Tarjetas de producto.
+- Botones claros.
+- Mensajes de carga.
+- Mensajes de éxito.
+- Mensajes de error.
+- Filtros por categoría.
+- Búsqueda por nombre.
+- Flujo guiado para finalizar pedido.
+- Diseño responsivo.
+
+---
+
+# Rutas principales del frontend
+
+## Cliente y público
+
+```text
+/
+ /login
+ /registro
+ /perfil
+ /carrito
+ /finalizar-pedido
+ /pagar-pedido/:uuid
+ /mis-pedidos
+ /mis-pedidos/:uuid
+ /recetas
+ /recetas/:uuid
+ /productos/:uuid/comprar
+```
+
+## Administrador
+
+```text
+/admin
+/admin/productos
+/admin/productos/nuevo
+/admin/productos/:uuid/editar
+/admin/categorias
+/admin/categorias/nueva
+/admin/categorias/:uuid/editar
+/admin/usuarios
+/admin/pedidos
+/admin/inventario
+/admin/recetas
+```
+
+---
+
+# Endpoints principales del backend
+
+## Auth
+
+```text
+POST /api/auth/login
+POST /api/auth/register
+```
+
+## Products
+
+```text
+GET    /api/products
+GET    /api/products/:uuid
+GET    /api/products/admin/all
+POST   /api/products
+PATCH  /api/products/:uuid
+PUT    /api/products/activate/:uuid
+DELETE /api/products/:uuid
+```
+
+## Categories
+
+```text
+GET    /api/categories
+GET    /api/categories/admin/all
+POST   /api/categories
+PATCH  /api/categories/:uuid
+PUT    /api/categories/activate/:uuid
+DELETE /api/categories/:uuid
+```
+
+## Cart
+
+```text
+GET    /api/cart
+DELETE /api/cart/empty
+DELETE /api/cart/cancel
+```
+
+## Cart Details
+
+```text
+POST   /api/cart-details/add-product
+PUT    /api/cart-details/update-product-quantity/:uuid
+DELETE /api/cart-details/delete-product/:uuid
+```
+
+## Orders
+
+```text
+POST   /api/orders
+GET    /api/orders/my-orders
+GET    /api/orders/:uuid
+PATCH  /api/orders/:uuid/cancel
+GET    /api/orders/admin/all
+PATCH  /api/orders/admin/:uuid/status
+DELETE /api/orders/admin/:uuid
+```
+
+## Payments
+
+```text
+POST   /api/payments/checkout
+GET    /api/payments/admin/all
+GET    /api/payments/:uuid
+PUT    /api/payments/admin/confirm/:uuid
+PUT    /api/payments/admin/status/:uuid
+DELETE /api/payments/admin/reject/:uuid
+```
+
+## Deliveries
+
+```text
+GET  /api/deliveries/admin/all
+POST /api/deliveries/admin
+GET  /api/deliveries/:uuid
+PUT  /api/deliveries/admin/:uuid/status
+```
+
+## Inventory
+
+```text
+POST   /api/inventory/admin
+GET    /api/inventory/admin
+GET    /api/inventory/admin/summary
+GET    /api/inventory/admin/:uuid
+PATCH  /api/inventory/admin/:uuid
+DELETE /api/inventory/admin/:uuid
+GET    /api/inventory/admin/:uuid/movements
+```
+
+## Inventory Movements
+
+```text
+POST   /api/inventory-movements/admin
+GET    /api/inventory-movements/admin
+GET    /api/inventory-movements/admin/:uuid
+GET    /api/inventory-movements/admin/inventory/:inventoryUuid
+PATCH  /api/inventory-movements/admin/:uuid
+DELETE /api/inventory-movements/admin/:uuid
+```
+
+## Recipes
+
+```text
+POST   /api/recipes/admin
+GET    /api/recipes/admin/all
+GET    /api/recipes/admin/:uuid
+PATCH  /api/recipes/admin/:uuid
+DELETE /api/recipes/admin/:uuid
+
+GET    /api/recipes
+GET    /api/recipes?productUuid=UUID_PRODUCTO_PRINCIPAL
+GET    /api/recipes/:uuid
+```
+
+---
+
+# Estado actual del PMV
+
+El proyecto integra los módulos principales necesarios para demostrar el funcionamiento del PMV:
+
+- Autenticación.
+- Usuarios.
+- Categorías.
+- Productos.
+- Carrito.
+- Pedidos.
+- Pagos.
+- Domicilios.
+- Inventario.
+- Movimientos de inventario.
+- Recetas.
+- Panel administrativo.
+- Interfaz cliente.
+
+El sistema permite evidenciar un flujo completo de compra y administración.
+
+---
+
+# Repositorio
+
+```text
+https://github.com/Elena-0718/La-Rueda-Market.git
+```
+
+---
+
+
+# Autora
+
+```text
+Nórida Elena Rueda Peña
+Análisis y Desarrollo de Software - ADSO
+SENA
+```
+
+---
+
+
