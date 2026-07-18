@@ -141,6 +141,14 @@ const getReasonLabel = (reason) => {
   return labels[reason] || reason
 }
 
+const getBackendErrorMessage = (error, fallbackMessage) => {
+  const backendMessage = error?.response?.data?.message || fallbackMessage
+
+  return Array.isArray(backendMessage)
+    ? backendMessage.join(' ')
+    : backendMessage
+}
+
 function AdminInventoryPage() {
   const navigate = useNavigate()
 
@@ -174,6 +182,12 @@ function AdminInventoryPage() {
     )
   }, [products, inventoriesProductUuids])
 
+  const selectedMovementInventory = useMemo(() => {
+    return inventories.find(
+      (inventory) => inventory.uuid === movementForm.inventoryUuid,
+    )
+  }, [inventories, movementForm.inventoryUuid])
+
   const loadData = async () => {
     try {
       setIsLoading(true)
@@ -194,14 +208,11 @@ function AdminInventoryPage() {
 
       setProducts(productsList)
     } catch (error) {
-      const backendMessage =
-        error?.response?.data?.message ||
-        'NO SE PUDO CARGAR LA INFORMACIÓN DE INVENTARIO.'
-
       setErrorMessage(
-        Array.isArray(backendMessage)
-          ? backendMessage.join(' ')
-          : backendMessage,
+        getBackendErrorMessage(
+          error,
+          'NO SE PUDO CARGAR LA INFORMACIÓN DE INVENTARIO.',
+        ),
       )
     } finally {
       setIsLoading(false)
@@ -223,14 +234,8 @@ function AdminInventoryPage() {
       setSuccessMessage(successText)
       await loadData()
     } catch (error) {
-      const backendMessage =
-        error?.response?.data?.message ||
-        'NO SE PUDO COMPLETAR LA ACCIÓN.'
-
       setErrorMessage(
-        Array.isArray(backendMessage)
-          ? backendMessage.join(' ')
-          : backendMessage,
+        getBackendErrorMessage(error, 'NO SE PUDO COMPLETAR LA ACCIÓN.'),
       )
     } finally {
       setIsWorking(false)
@@ -267,6 +272,9 @@ function AdminInventoryPage() {
   const handleCreateInventory = (event) => {
     event.preventDefault()
 
+    setErrorMessage('')
+    setSuccessMessage('')
+
     if (!inventoryForm.productUuid) {
       setErrorMessage('DEBES SELECCIONAR UN PRODUCTO.')
       return
@@ -281,13 +289,39 @@ function AdminInventoryPage() {
   const handleCreateMovement = (event) => {
     event.preventDefault()
 
+    setErrorMessage('')
+    setSuccessMessage('')
+
     if (!movementForm.inventoryUuid) {
       setErrorMessage('DEBES SELECCIONAR UN PRODUCTO CON INVENTARIO.')
       return
     }
 
+    const quantity = Number(movementForm.quantity)
+    const currentStock = Number(selectedMovementInventory?.currentStock || 0)
+
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      setErrorMessage('LA CANTIDAD DEL MOVIMIENTO DEBE SER MAYOR A CERO.')
+      return
+    }
+
+    if (!selectedMovementInventory) {
+      setErrorMessage('NO SE ENCONTRÓ EL INVENTARIO SELECCIONADO.')
+      return
+    }
+
+    if (movementForm.movementType === 'OUT' && quantity > currentStock) {
+      setErrorMessage(
+        'LA CANTIDAD DE SALIDA NO PUEDE SER MAYOR AL STOCK DISPONIBLE.',
+      )
+      return
+    }
+
     runAction(async () => {
-      await createInventoryMovementAdmin(movementForm)
+      await createInventoryMovementAdmin({
+        ...movementForm,
+        quantity,
+      })
 
       setMovementForm({
         ...initialMovementForm,
@@ -306,6 +340,8 @@ function AdminInventoryPage() {
 
   const handleSelectInventory = async (inventory) => {
     try {
+      setErrorMessage('')
+      setSuccessMessage('')
       setSelectedInventory(inventory)
       setMovementForm((current) => ({
         ...current,
@@ -315,14 +351,11 @@ function AdminInventoryPage() {
       const data = await getInventoryMovementsByInventoryAdmin(inventory.uuid)
       setMovements(data)
     } catch (error) {
-      const backendMessage =
-        error?.response?.data?.message ||
-        'NO SE PUDIERON CARGAR LOS MOVIMIENTOS.'
-
       setErrorMessage(
-        Array.isArray(backendMessage)
-          ? backendMessage.join(' ')
-          : backendMessage,
+        getBackendErrorMessage(
+          error,
+          'NO SE PUDIERON CARGAR LOS MOVIMIENTOS.',
+        ),
       )
     }
   }
@@ -408,13 +441,19 @@ function AdminInventoryPage() {
         </section>
 
         {successMessage && (
-          <p className="mt-6 rounded-2xl bg-green-100 p-4 font-bold text-green-800">
+          <p
+            role="alert"
+            className="mt-6 rounded-2xl bg-green-100 p-4 font-bold text-green-800"
+          >
             {successMessage}
           </p>
         )}
 
         {errorMessage && (
-          <p className="mt-6 rounded-2xl bg-red-100 p-4 font-bold text-red-700">
+          <p
+            role="alert"
+            className="mt-6 rounded-2xl bg-red-100 p-4 font-bold text-red-700"
+          >
             {errorMessage}
           </p>
         )}
@@ -590,7 +629,7 @@ function AdminInventoryPage() {
                   disabled={isWorking}
                   className="mt-5 w-full rounded-2xl bg-green-800 px-5 py-3 font-black text-white hover:bg-green-900 disabled:bg-stone-400"
                 >
-                  CREAR INVENTARIO
+                  {isWorking ? 'PROCESANDO...' : 'CREAR INVENTARIO'}
                 </button>
               </form>
 
@@ -605,6 +644,16 @@ function AdminInventoryPage() {
                 <p className="mt-2 text-sm font-semibold text-stone-600">
                   REGISTRA ENTRADAS, VENTAS, PÉRDIDAS, VENCIMIENTOS O AJUSTES.
                 </p>
+
+                {selectedMovementInventory && (
+                  <p className="mt-4 rounded-2xl bg-green-50 p-4 text-sm font-bold text-green-900">
+                    STOCK DISPONIBLE PARA ESTE PRODUCTO:{' '}
+                    {selectedMovementInventory.currentStock}{' '}
+                    {getUnitLabel(
+                      selectedMovementInventory.product?.unitMeasure,
+                    )}
+                  </p>
+                )}
 
                 <div className="mt-5 grid gap-4 md:grid-cols-2">
                   <label className="md:col-span-2">
@@ -750,7 +799,7 @@ function AdminInventoryPage() {
                   disabled={isWorking}
                   className="mt-5 w-full rounded-2xl bg-green-800 px-5 py-3 font-black text-white hover:bg-green-900 disabled:bg-stone-400"
                 >
-                  REGISTRAR MOVIMIENTO
+                  {isWorking ? 'PROCESANDO...' : 'REGISTRAR MOVIMIENTO'}
                 </button>
               </form>
             </section>
