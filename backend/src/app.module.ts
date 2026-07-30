@@ -37,10 +37,13 @@ import { RecipesModule } from './recipes/recipes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
-      isGlobal: true,
-      envFilePath: '.env.development',
-      load: [typeorm],
-    }),
+  isGlobal: true,
+  envFilePath:
+    process.env.NODE_ENV === 'production'
+      ? undefined
+      : '.env.development',
+  load: [typeorm],
+}),
 
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],

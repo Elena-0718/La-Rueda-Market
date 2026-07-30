@@ -7,8 +7,7 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app =
-    await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const logger = new Logger('LaRuedaMarket');
 
@@ -20,18 +19,25 @@ async function bootstrap() {
   });
 
   app.useStaticAssets(join(__dirname, '..', 'upload'), {
-  prefix: '/uploads/',
-});
+    prefix: '/uploads/',
+  });
 
+  /* =========================
   /* =========================
      CORS
   ========================== */
+  const allowedOrigins: string[] = [
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    'http://localhost:3001',
+  ];
+
+  if (process.env.FRONTEND_URL) {
+    allowedOrigins.push(process.env.FRONTEND_URL);
+  }
+
   app.enableCors({
-    origin: [
-      'http://localhost:5173',
-      'http://127.0.0.1:5173',
-      'http://localhost:3001',
-    ],
+    origin: allowedOrigins,
     credentials: true,
   });
 
@@ -84,10 +90,11 @@ async function bootstrap() {
 
   await app.listen(port);
 
-  logger.log(`Servidor corriendo en http://localhost:${port}/api`);
-  logger.log(`Swagger disponible en http://localhost:${port}/api/docs`);
-  logger.log(`Archivos estáticos en http://localhost:${port}/upload/`);
-  logger.log(`Archivos estáticos también en http://localhost:${port}/uploads/`);
+  logger.log(`Servidor corriendo en puerto ${port}`);
+  logger.log(`API disponible en /api`);
+  logger.log(`Swagger disponible en /api/docs`);
+  logger.log(`Archivos estáticos en /upload/`);
+  logger.log(`Archivos estáticos también en /uploads/`);
 }
 
 bootstrap();
