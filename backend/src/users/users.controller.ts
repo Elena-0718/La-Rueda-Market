@@ -26,8 +26,9 @@ import { Roles } from '../enum/roles.enum';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesDecorator } from '../decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
-import { CreateUserDto } from './dtos/createuser.dto';
-import { UpdateUserDto } from './dtos/updateuser.dto';
+import { CreateUserDto } from './dtos/create-user.dto';
+import { UpdateUserDto } from './dtos/update-user.dto';
+
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
