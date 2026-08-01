@@ -18,8 +18,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { CreateUserDto } from './dtos/CreateUser.dto';
-import { UpdateUserDto } from './dtos/UpdateUser.dto';
+
 import { UserService } from './users.service';
 
 
@@ -27,6 +26,8 @@ import { Roles } from '../enum/roles.enum';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesDecorator } from '../decorators/roles.decorator';
 import { RolesGuard } from '../auth/guards/roles.guard';
+import { CreateUserDto } from './dtos/createuser.dto';
+import { UpdateUserDto } from './dtos/updateuser.dto';
 
 @ApiTags('Usuarios')
 @ApiBearerAuth()
