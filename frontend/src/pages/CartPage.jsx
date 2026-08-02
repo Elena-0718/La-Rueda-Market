@@ -7,14 +7,26 @@ import {
 } from '../api/cartDetailsService'
 import { isAuthenticated } from '../features/auth/authStorage'
 
-const API_URL = 'http://localhost:3000'
-
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
     maximumFractionDigits: 0,
   }).format(Number(value || 0))
+}
+
+const getProductImage = (product) => {
+  const image = product?.images?.[0]
+
+  if (!image) {
+    return ''
+  }
+
+  if (image.startsWith('http://') || image.startsWith('https://')) {
+    return image
+  }
+
+  return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000'}${image}`
 }
 
 function CartPage() {
@@ -211,7 +223,7 @@ function CartPage() {
             <div className="space-y-4">
               {cartDetails.map((detail) => {
                 const product = detail.product
-                const image = product?.images?.[0]
+                const image = getProductImage(product)
                 const isActionLoading = actionLoadingId === detail.uuid
 
                 return (
@@ -223,7 +235,7 @@ function CartPage() {
                       <div className="h-28 overflow-hidden rounded-2xl bg-green-50">
                         {image ? (
                           <img
-                            src={`${API_URL}${image}`}
+                            src={image}
                             alt={product?.name}
                             className="h-full w-full object-cover"
                           />
