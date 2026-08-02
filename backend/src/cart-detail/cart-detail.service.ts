@@ -38,6 +38,10 @@ export class CartDetailService {
 
   /* =========================
      AGREGAR PRODUCTO AL CARRITO
+     NOTA DE NEGOCIO:
+     EN LA RUEDA MARKET EL STOCK ES CONTROL INTERNO
+     DEL INVENTARIO FÍSICO. NO BLOQUEA LA COMPRA EN LÍNEA,
+     PORQUE LOS PEDIDOS PUEDEN SER PROGRAMADOS.
   ========================= */
   async addProductToCartService(
     req: any,
@@ -60,12 +64,6 @@ export class CartDetailService {
       throw new NotFoundException('Producto no encontrado o inactivo.');
     }
 
-    if (addProductDto.quantity > product.stock) {
-      throw new BadRequestException(
-        `Solo hay ${product.stock} unidades disponibles de ${product.name}.`,
-      );
-    }
-
     const unitPrice = Number(product.price);
 
     const existingDetail = cart.cartDetails?.find(
@@ -74,12 +72,6 @@ export class CartDetailService {
 
     if (existingDetail) {
       const newQuantity = existingDetail.quantity + addProductDto.quantity;
-
-      if (newQuantity > product.stock) {
-        throw new BadRequestException(
-          `No puedes agregar ${addProductDto.quantity} unidades más. Solo hay ${product.stock} disponibles de ${product.name}.`,
-        );
-      }
 
       return await this.cartDetailRepository.updateProductQuantityRepository(
         existingDetail.uuid,
@@ -96,6 +88,9 @@ export class CartDetailService {
 
   /* =========================
      ACTUALIZAR CANTIDAD
+     NOTA DE NEGOCIO:
+     LA CANTIDAD DEL CARRITO TAMPOCO SE BLOQUEA POR STOCK.
+     EL ADMIN GESTIONA LA DISPONIBILIDAD DESDE PEDIDOS E INVENTARIO.
   ========================= */
   async updateProductQuantityService(
     req: any,
@@ -127,12 +122,6 @@ export class CartDetailService {
 
     if (!product) {
       throw new NotFoundException('Producto no encontrado o inactivo.');
-    }
-
-    if (dto.quantity > product.stock) {
-      throw new BadRequestException(
-        `Solo hay ${product.stock} unidades disponibles de ${product.name}.`,
-      );
     }
 
     return await this.cartDetailRepository.updateProductQuantityRepository(
