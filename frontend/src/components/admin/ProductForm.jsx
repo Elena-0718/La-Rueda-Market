@@ -1,15 +1,9 @@
-const API_URL = 'http://localhost:3000'
-
 function ProductForm({
   formData,
   categories,
-  selectedImage,
-  imagePreview,
   isSubmitting,
   submitLabel,
-  isImageRequired = true,
   onChange,
-  onImageChange,
   onSubmit,
 }) {
   return (
@@ -141,47 +135,36 @@ function ProductForm({
 
         <div className="md:col-span-2">
           <label className="mb-2 block font-semibold text-green-900">
-            IMAGEN DEL PRODUCTO
+            URL DE IMAGEN DEL PRODUCTO
           </label>
 
           <input
-            type="file"
-            accept="image/png,image/jpeg,image/jpg,image/webp"
-            onChange={onImageChange}
+            type="url"
+            name="imageUrl"
+            value={formData.imageUrl}
+            onChange={onChange}
+            placeholder="https://res.cloudinary.com/tu-cuenta/image/upload/producto.webp"
             className="w-full rounded-2xl border border-green-200 px-4 py-3 outline-none focus:border-green-700"
-            required={isImageRequired}
+            required
           />
 
           <p className="mt-2 text-sm font-semibold text-stone-500">
-            FORMATOS PERMITIDOS: JPG, JPEG, PNG O WEBP. MÁXIMO 3MB.
+            PEGA AQUÍ LA URL DE CLOUDINARY O DE UNA IMAGEN ALOJADA EN LA WEB.
           </p>
 
-          {!isImageRequired && (
-            <p className="mt-2 text-sm font-semibold text-stone-500">
-              SI NO SELECCIONAS UNA NUEVA IMAGEN, SE CONSERVA LA ACTUAL.
-            </p>
-          )}
-
-          {selectedImage && (
-            <p className="mt-2 text-sm font-semibold text-green-800">
-              IMAGEN SELECCIONADA: {selectedImage.name}
-            </p>
-          )}
-
-          {imagePreview && (
+          {formData.imageUrl && (
             <div className="mt-4">
               <p className="mb-2 font-semibold text-green-900">
                 VISTA PREVIA
               </p>
 
               <img
-                src={
-                  imagePreview.startsWith('/uploads')
-                    ? `${API_URL}${imagePreview}`
-                    : imagePreview
-                }
+                src={formData.imageUrl}
                 alt="Vista previa del producto"
                 className="h-56 w-full rounded-3xl object-cover md:w-96"
+                onError={(event) => {
+                  event.currentTarget.style.display = 'none'
+                }}
               />
             </div>
           )}

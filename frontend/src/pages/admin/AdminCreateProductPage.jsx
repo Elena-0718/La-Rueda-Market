@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getCategories } from '../../api/categoriesService'
-import {
-  createProduct,
-  uploadProductImage,
-} from '../../api/adminProductsService'
+import { createProduct } from '../../api/adminProductsService'
 import ProductForm from '../../components/admin/ProductForm'
 
 const initialFormData = {
@@ -15,6 +12,7 @@ const initialFormData = {
   unitMeasure: 'unit',
   availabilityType: 'daily',
   categoryUuid: '',
+  imageUrl: '',
   isFeatured: false,
 }
 
@@ -22,8 +20,6 @@ function AdminCreateProductPage() {
   const navigate = useNavigate()
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState(initialFormData)
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [imagePreview, setImagePreview] = useState('')
   const [isLoadingCategories, setIsLoadingCategories] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -53,50 +49,48 @@ function AdminCreateProductPage() {
     }))
   }
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0]
+  const isValidImageUrl = (url) => {
+    if (!url.trim()) return false
 
-    if (!file) {
-      setSelectedImage(null)
-      setImagePreview('')
-      return
+    try {
+      const parsedUrl = new URL(url)
+      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+    } catch {
+      return false
     }
-
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    const maxSize = 3 * 1024 * 1024
-
-    if (!allowedTypes.includes(file.type)) {
-      setErrorMessage('SOLO SE PERMITEN IMÁGENES JPG, JPEG, PNG O WEBP.')
-      setSelectedImage(null)
-      setImagePreview('')
-      return
-    }
-
-    if (file.size > maxSize) {
-      setErrorMessage('LA IMAGEN NO PUEDE PESAR MÁS DE 3MB.')
-      setSelectedImage(null)
-      setImagePreview('')
-      return
-    }
-
-    setErrorMessage('')
-    setSelectedImage(file)
-    setImagePreview(URL.createObjectURL(file))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!selectedImage) {
-      setErrorMessage('DEBES SELECCIONAR UNA IMAGEN DEL PRODUCTO.')
+    if (!formData.name.trim()) {
+      setErrorMessage('DEBES INGRESAR EL NOMBRE DEL PRODUCTO.')
+      return
+    }
+
+    if (!formData.price || Number(formData.price) <= 0) {
+      setErrorMessage('DEBES INGRESAR UN PRECIO VÁLIDO.')
+      return
+    }
+
+    if (!formData.stock || Number(formData.stock) < 0) {
+      setErrorMessage('DEBES INGRESAR UN STOCK VÁLIDO.')
+      return
+    }
+
+    if (!formData.categoryUuid) {
+      setErrorMessage('DEBES SELECCIONAR UNA CATEGORÍA.')
+      return
+    }
+
+    if (!isValidImageUrl(formData.imageUrl)) {
+      setErrorMessage('DEBES PEGAR UNA URL VÁLIDA DE IMAGEN.')
       return
     }
 
     try {
       setIsSubmitting(true)
       setErrorMessage('')
-
-      const uploadedImage = await uploadProductImage(selectedImage)
 
       const payload = {
         name: formData.name.trim(),
@@ -107,7 +101,7 @@ function AdminCreateProductPage() {
         availabilityType: formData.availabilityType,
         categoryUuid: formData.categoryUuid,
         isFeatured: formData.isFeatured,
-        images: [uploadedImage.url],
+        images: [formData.imageUrl.trim()],
       }
 
       await createProduct(payload)
@@ -135,7 +129,7 @@ function AdminCreateProductPage() {
             </h1>
 
             <p className="mt-3 text-stone-700">
-              CREA UN PRODUCTO CON IMAGEN PARA MOSTRARLO EN EL CATÁLOGO.
+              CREA UN PRODUCTO CON URL DE IMAGEN PARA MOSTRARLO EN EL CATÁLOGO.
             </p>
           </div>
 
@@ -161,13 +155,9 @@ function AdminCreateProductPage() {
           <ProductForm
             formData={formData}
             categories={categories}
-            selectedImage={selectedImage}
-            imagePreview={imagePreview}
             isSubmitting={isSubmitting}
             submitLabel="CREAR PRODUCTO"
-            isImageRequired={true}
             onChange={handleChange}
-            onImageChange={handleImageChange}
             onSubmit={handleSubmit}
           />
         )}

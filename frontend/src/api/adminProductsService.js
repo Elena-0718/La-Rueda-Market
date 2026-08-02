@@ -16,20 +16,10 @@ export const getProductByUuid = async (productUuid) => {
 }
 
 export const updateProduct = async (productUuid, productData) => {
-  const response = await axiosClient.patch(`/products/${productUuid}`, productData)
-  return response.data
-}
-
-export const uploadProductImage = async (file) => {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const response = await axiosClient.post('/uploads/products', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  })
-
+  const response = await axiosClient.patch(
+    `/products/${productUuid}`,
+    productData,
+  )
   return response.data
 }
 

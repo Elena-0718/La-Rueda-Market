@@ -4,7 +4,6 @@ import { getCategories } from '../../api/categoriesService'
 import {
   getProductByUuid,
   updateProduct,
-  uploadProductImage,
 } from '../../api/adminProductsService'
 import ProductForm from '../../components/admin/ProductForm'
 
@@ -16,6 +15,7 @@ const initialFormData = {
   unitMeasure: 'unit',
   availabilityType: 'daily',
   categoryUuid: '',
+  imageUrl: '',
   isFeatured: false,
 }
 
@@ -25,9 +25,6 @@ function AdminEditProductPage() {
 
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState(initialFormData)
-  const [selectedImage, setSelectedImage] = useState(null)
-  const [imagePreview, setImagePreview] = useState('')
-  const [currentImageUrl, setCurrentImageUrl] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -40,6 +37,8 @@ function AdminEditProductPage() {
           getProductByUuid(uuid),
         ])
 
+        const productImage = productData.images?.[0] || ''
+
         setCategories(categoriesData)
 
         setFormData({
@@ -49,13 +48,11 @@ function AdminEditProductPage() {
           stock: productData.stock || '',
           unitMeasure: productData.unitMeasure || 'unit',
           availabilityType: productData.availabilityType || 'daily',
-          categoryUuid: productData.category?.uuid || productData.categoryUuid || '',
+          categoryUuid:
+            productData.category?.uuid || productData.categoryUuid || '',
+          imageUrl: productImage,
           isFeatured: Boolean(productData.isFeatured),
         })
-
-        const productImage = productData.images?.[0] || ''
-        setCurrentImageUrl(productImage)
-        setImagePreview(productImage)
       } catch (error) {
         console.error(error)
         setErrorMessage('NO SE PUDO CARGAR LA INFORMACIÓN DEL PRODUCTO.')
@@ -76,50 +73,48 @@ function AdminEditProductPage() {
     }))
   }
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0]
+  const isValidImageUrl = (url) => {
+    if (!url.trim()) return false
 
-    if (!file) {
-      setSelectedImage(null)
-      setImagePreview(currentImageUrl)
-      return
+    try {
+      const parsedUrl = new URL(url)
+      return parsedUrl.protocol === 'http:' || parsedUrl.protocol === 'https:'
+    } catch {
+      return false
     }
-
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
-    const maxSize = 3 * 1024 * 1024
-
-    if (!allowedTypes.includes(file.type)) {
-      setErrorMessage('SOLO SE PERMITEN IMÁGENES JPG, JPEG, PNG O WEBP.')
-      setSelectedImage(null)
-      setImagePreview(currentImageUrl)
-      return
-    }
-
-    if (file.size > maxSize) {
-      setErrorMessage('LA IMAGEN NO PUEDE PESAR MÁS DE 3MB.')
-      setSelectedImage(null)
-      setImagePreview(currentImageUrl)
-      return
-    }
-
-    setErrorMessage('')
-    setSelectedImage(file)
-    setImagePreview(URL.createObjectURL(file))
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
 
+    if (!formData.name.trim()) {
+      setErrorMessage('DEBES INGRESAR EL NOMBRE DEL PRODUCTO.')
+      return
+    }
+
+    if (!formData.price || Number(formData.price) <= 0) {
+      setErrorMessage('DEBES INGRESAR UN PRECIO VÁLIDO.')
+      return
+    }
+
+    if (!formData.stock || Number(formData.stock) < 0) {
+      setErrorMessage('DEBES INGRESAR UN STOCK VÁLIDO.')
+      return
+    }
+
+    if (!formData.categoryUuid) {
+      setErrorMessage('DEBES SELECCIONAR UNA CATEGORÍA.')
+      return
+    }
+
+    if (!isValidImageUrl(formData.imageUrl)) {
+      setErrorMessage('DEBES PEGAR UNA URL VÁLIDA DE IMAGEN.')
+      return
+    }
+
     try {
       setIsSubmitting(true)
       setErrorMessage('')
-
-      let imageUrl = currentImageUrl
-
-      if (selectedImage) {
-        const uploadedImage = await uploadProductImage(selectedImage)
-        imageUrl = uploadedImage.url
-      }
 
       const payload = {
         name: formData.name.trim(),
@@ -130,7 +125,7 @@ function AdminEditProductPage() {
         availabilityType: formData.availabilityType,
         categoryUuid: formData.categoryUuid,
         isFeatured: formData.isFeatured,
-        images: imageUrl ? [imageUrl] : [],
+        images: [formData.imageUrl.trim()],
       }
 
       await updateProduct(uuid, payload)
@@ -158,7 +153,8 @@ function AdminEditProductPage() {
             </h1>
 
             <p className="mt-3 text-stone-700">
-              ACTUALIZA LOS DATOS DEL PRODUCTO Y CAMBIA SU IMAGEN SI ES NECESARIO.
+              ACTUALIZA LOS DATOS DEL PRODUCTO Y CAMBIA LA URL DE IMAGEN SI ES
+              NECESARIO.
             </p>
           </div>
 
@@ -184,13 +180,9 @@ function AdminEditProductPage() {
           <ProductForm
             formData={formData}
             categories={categories}
-            selectedImage={selectedImage}
-            imagePreview={imagePreview}
             isSubmitting={isSubmitting}
             submitLabel="ACTUALIZAR PRODUCTO"
-            isImageRequired={false}
             onChange={handleChange}
-            onImageChange={handleImageChange}
             onSubmit={handleSubmit}
           />
         )}
