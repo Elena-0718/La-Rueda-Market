@@ -3,8 +3,6 @@ import { Link, useNavigate } from 'react-router-dom'
 import { addProductToCart } from '../api/cartDetailsService'
 import { isAuthenticated } from '../features/auth/authStorage'
 
-const API_URL = 'http://localhost:3000'
-
 const getUnitLabel = (unitMeasure) => {
   const units = {
     unit: 'UNIDAD',
@@ -24,12 +22,28 @@ const formatCurrency = (value) => {
   }).format(Number(value || 0))
 }
 
+const getProductImage = (product) => {
+  const image = product.images?.[0]
+
+  if (!image) {
+    return ''
+  }
+
+  if (image.startsWith('http://') || image.startsWith('https://')) {
+    return image
+  }
+
+  return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000'}${image}`
+}
+
 function ProductCard({ product }) {
   const navigate = useNavigate()
 
   const [isAdding, setIsAdding] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
+
+  const productImage = getProductImage(product)
 
   const handleBuyClick = async () => {
     setSuccessMessage('')
@@ -80,12 +94,16 @@ function ProductCard({ product }) {
 
   return (
     <article className="overflow-hidden rounded-3xl bg-white shadow">
-      {product.images?.[0] && (
+      {productImage ? (
         <img
-          src={`${API_URL}${product.images[0]}`}
+          src={productImage}
           alt={product.name}
           className="h-44 w-full object-cover"
         />
+      ) : (
+        <div className="flex h-44 w-full items-center justify-center bg-green-50 text-sm font-bold text-green-800">
+          SIN IMAGEN
+        </div>
       )}
 
       <div className="p-5">
