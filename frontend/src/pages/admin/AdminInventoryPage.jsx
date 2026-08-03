@@ -17,7 +17,6 @@ const INVENTORY_FILTERS = {
   LOW_STOCK: 'LOW_STOCK',
   NEAR_EXPIRATION: 'NEAR_EXPIRATION',
   EXPIRED: 'EXPIRED',
-  MOVEMENTS: 'MOVEMENTS',
 }
 
 const getInventoryFilterLabel = (filter) => {
@@ -26,7 +25,6 @@ const getInventoryFilterLabel = (filter) => {
     [INVENTORY_FILTERS.LOW_STOCK]: 'Productos con bajo stock',
     [INVENTORY_FILTERS.NEAR_EXPIRATION]: 'Productos próximos a vencer',
     [INVENTORY_FILTERS.EXPIRED]: 'Productos vencidos',
-    [INVENTORY_FILTERS.MOVEMENTS]: 'Productos con movimientos',
   }
 
   return labels[filter] || 'Todos los productos controlados'
@@ -183,6 +181,8 @@ function AdminInventoryPage() {
   const [inventories, setInventories] = useState([])
   const [products, setProducts] = useState([])
   const [activeFilter, setActiveFilter] = useState(INVENTORY_FILTERS.ALL)
+  const [searchText, setSearchText] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
 
   const [summary, setSummary] = useState({
     controlledProducts: 0,
@@ -219,42 +219,45 @@ function AdminInventoryPage() {
   }, [inventories, movementForm.inventoryUuid])
 
   const filteredInventories = useMemo(() => {
-    if (activeFilter === INVENTORY_FILTERS.ALL) {
-      return inventories
-    }
+    let filtered = inventories
 
     if (activeFilter === INVENTORY_FILTERS.LOW_STOCK) {
-      return inventories.filter(
+      filtered = filtered.filter(
         (inventory) => inventory.alerts?.status === 'BAJO STOCK',
       )
     }
 
     if (activeFilter === INVENTORY_FILTERS.NEAR_EXPIRATION) {
-      return inventories.filter(
+      filtered = filtered.filter(
         (inventory) => inventory.alerts?.status === 'PRÓXIMO A VENCER',
       )
     }
 
     if (activeFilter === INVENTORY_FILTERS.EXPIRED) {
-      return inventories.filter(
+      filtered = filtered.filter(
         (inventory) => inventory.alerts?.status === 'VENCIDO',
       )
     }
 
-    if (activeFilter === INVENTORY_FILTERS.MOVEMENTS) {
-      return inventories.filter((inventory) => {
-        const totalMovements =
-          inventory.movements?.length ||
-          inventory.inventoryMovements?.length ||
-          inventory.totalMovements ||
-          0
+    const normalizedSearch = searchTerm.trim().toLowerCase()
 
-        return Number(totalMovements) > 0
+    if (normalizedSearch) {
+      filtered = filtered.filter((inventory) => {
+        const productName = inventory.product?.name?.toLowerCase() || ''
+        const categoryName =
+          inventory.product?.category?.name?.toLowerCase() || ''
+        const supplierName = inventory.supplierName?.toLowerCase() || ''
+
+        return (
+          productName.includes(normalizedSearch) ||
+          categoryName.includes(normalizedSearch) ||
+          supplierName.includes(normalizedSearch)
+        )
       })
     }
 
-    return inventories
-  }, [inventories, activeFilter])
+    return filtered
+  }, [inventories, activeFilter, searchTerm])
 
   const loadData = async () => {
     try {
@@ -335,6 +338,16 @@ function AdminInventoryPage() {
 
       return updatedForm
     })
+  }
+
+  const handleSearchInventory = (event) => {
+    event.preventDefault()
+    setSearchTerm(searchText)
+  }
+
+  const handleClearSearch = () => {
+    setSearchText('')
+    setSearchTerm('')
   }
 
   const handleCreateInventory = (event) => {
@@ -471,7 +484,7 @@ function AdminInventoryPage() {
           </div>
         </header>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-5">
+        <section className="mt-6 grid gap-4 md:grid-cols-4">
           <button
             type="button"
             onClick={() => setActiveFilter(INVENTORY_FILTERS.ALL)}
@@ -530,22 +543,6 @@ function AdminInventoryPage() {
             <p className="text-sm font-black text-stone-500">VENCIDOS</p>
             <p className="mt-2 text-3xl font-black text-red-700">
               {summary.expired}
-            </p>
-            <p className="mt-2 text-xs font-bold text-stone-500">
-              FILTRAR
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => setActiveFilter(INVENTORY_FILTERS.MOVEMENTS)}
-            className={getSummaryCardClass(
-              activeFilter === INVENTORY_FILTERS.MOVEMENTS,
-            )}
-          >
-            <p className="text-sm font-black text-stone-500">MOVIMIENTOS</p>
-            <p className="mt-2 text-3xl font-black text-green-900">
-              {summary.totalMovements}
             </p>
             <p className="mt-2 text-xs font-bold text-stone-500">
               FILTRAR
@@ -918,7 +915,7 @@ function AdminInventoryPage() {
             </section>
 
             <section className="mt-6 overflow-hidden rounded-3xl bg-white shadow">
-              <div className="flex flex-col gap-3 border-b border-stone-100 p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-4 border-b border-stone-100 p-6 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-green-900">
                     INVENTARIO FÍSICO
@@ -927,23 +924,52 @@ function AdminInventoryPage() {
                   <p className="mt-1 text-sm font-semibold text-stone-600">
                     FILTRO ACTIVO: {getInventoryFilterLabel(activeFilter)}
                   </p>
+
+                  {searchTerm && (
+                    <p className="mt-1 text-sm font-semibold text-stone-600">
+                      BÚSQUEDA: {searchTerm}
+                    </p>
+                  )}
                 </div>
 
-                <div className="flex flex-col gap-2 md:items-end">
+                <div className="flex flex-col gap-3 lg:items-end">
                   <p className="font-black text-green-900">
                     {filteredInventories.length} DE {inventories.length}{' '}
                     PRODUCTOS
                   </p>
 
-                  {activeFilter !== INVENTORY_FILTERS.ALL && (
+                  <form
+                    onSubmit={handleSearchInventory}
+                    className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto"
+                  >
+                    <input
+                      type="text"
+                      value={searchText}
+                      onChange={(event) => setSearchText(event.target.value)}
+                      placeholder="Buscar producto, categoría o proveedor"
+                      className="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold outline-none focus:border-green-700"
+                    />
+
                     <button
-                      type="button"
-                      onClick={() => setActiveFilter(INVENTORY_FILTERS.ALL)}
-                      className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50"
+                      type="submit"
+                      className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900"
                     >
-                      VER TODOS
+                      BUSCAR
                     </button>
-                  )}
+
+                    {(searchTerm || activeFilter !== INVENTORY_FILTERS.ALL) && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveFilter(INVENTORY_FILTERS.ALL)
+                          handleClearSearch()
+                        }}
+                        className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50"
+                      >
+                        VER TODOS
+                      </button>
+                    )}
+                  </form>
                 </div>
               </div>
 
@@ -960,17 +986,17 @@ function AdminInventoryPage() {
               ) : filteredInventories.length === 0 ? (
                 <section className="p-8 text-center">
                   <h3 className="text-xl font-black text-green-900">
-                    NO HAY PRODUCTOS PARA ESTE FILTRO
+                    NO HAY PRODUCTOS PARA ESTE FILTRO O BÚSQUEDA
                   </h3>
 
                   <p className="mt-2 text-stone-600">
-                    Selecciona otra tarjeta o vuelve a ver todos los productos
-                    controlados.
+                    Prueba con otro producto, categoría o proveedor, o vuelve a
+                    ver todos los productos controlados.
                   </p>
                 </section>
               ) : (
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1150px] text-left">
+                  <table className="w-full min-w-[1050px] text-left">
                     <thead className="bg-green-50 text-sm text-green-950">
                       <tr>
                         <th className="px-5 py-4 font-black">PRODUCTO</th>
@@ -1041,26 +1067,13 @@ function AdminInventoryPage() {
                           </td>
 
                           <td className="px-5 py-5">
-                            <div className="flex min-w-[260px] flex-wrap gap-2">
+                            <div className="flex min-w-[190px] flex-wrap gap-2">
                               <button
                                 type="button"
                                 onClick={() => handleSelectInventory(inventory)}
                                 className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900"
                               >
                                 VER MOVIMIENTOS
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setMovementForm((current) => ({
-                                    ...current,
-                                    inventoryUuid: inventory.uuid,
-                                  }))
-                                }
-                                className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50"
-                              >
-                                USAR EN MOVIMIENTO
                               </button>
 
                               <button
