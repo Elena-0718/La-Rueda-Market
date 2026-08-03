@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getUsers } from '../../api/adminUsersService'
 import {
@@ -9,10 +9,44 @@ import {
 
 function AdminUsersPage() {
   const [users, setUsers] = useState([])
+  const [searchText, setSearchText] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const [credentialBeingUpdated, setCredentialBeingUpdated] = useState(null)
+
+  const filteredUsers = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase()
+
+    if (!normalizedSearch) {
+      return users
+    }
+
+    return users.filter((user) => {
+      const fullName = user.fullName?.toLowerCase() || ''
+      const phone = String(
+        user.phone || user.credential?.phone || '',
+      ).toLowerCase()
+      const village = user.village?.toLowerCase() || ''
+      const role = user.credential?.role?.toLowerCase() || 'client'
+      const userStatus = user.isActive
+        ? 'activo activa'
+        : 'inactivo inactiva'
+      const credentialStatus = user.credential?.isActive
+        ? 'credencial activa activo'
+        : 'credencial inactiva inactivo'
+
+      return (
+        fullName.includes(normalizedSearch) ||
+        phone.includes(normalizedSearch) ||
+        village.includes(normalizedSearch) ||
+        role.includes(normalizedSearch) ||
+        userStatus.includes(normalizedSearch) ||
+        credentialStatus.includes(normalizedSearch)
+      )
+    })
+  }, [users, searchTerm])
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -29,6 +63,16 @@ function AdminUsersPage() {
 
     loadUsers()
   }, [])
+
+  const handleSearchUsers = (event) => {
+    event.preventDefault()
+    setSearchTerm(searchText)
+  }
+
+  const handleClearSearch = () => {
+    setSearchText('')
+    setSearchTerm('')
+  }
 
   const updateCredentialInTable = (userUuid, credentialChanges) => {
     setUsers((currentUsers) =>
@@ -191,140 +235,203 @@ function AdminUsersPage() {
 
           {!isLoading && !errorMessage && (
             <>
-              <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                <h2 className="text-2xl font-bold text-green-900">
-                  LISTADO DE USUARIOS
-                </h2>
+              <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-green-900">
+                    LISTADO DE USUARIOS
+                  </h2>
 
-                <p className="font-semibold text-stone-600">
-                  {users.length} USUARIOS REGISTRADOS
-                </p>
+                  <p className="mt-1 text-sm font-semibold text-stone-600">
+                    {filteredUsers.length} DE {users.length} USUARIOS
+                    REGISTRADOS
+                  </p>
+
+                  {searchTerm && (
+                    <p className="mt-1 text-sm font-semibold text-stone-600">
+                      BÚSQUEDA: {searchTerm}
+                    </p>
+                  )}
+                </div>
+
+                <form
+                  onSubmit={handleSearchUsers}
+                  className="flex w-full flex-col gap-2 sm:flex-row lg:w-auto"
+                >
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={(event) => setSearchText(event.target.value)}
+                    placeholder="Buscar nombre, celular, vereda o rol"
+                    className="rounded-full border border-stone-300 px-4 py-2 text-sm font-semibold outline-none focus:border-green-700"
+                  />
+
+                  <button
+                    type="submit"
+                    className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900"
+                  >
+                    BUSCAR
+                  </button>
+
+                  {searchTerm && (
+                    <button
+                      type="button"
+                      onClick={handleClearSearch}
+                      className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50"
+                    >
+                      VER TODOS
+                    </button>
+                  )}
+                </form>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1150px] border-collapse text-left">
-                  <thead>
-                    <tr className="border-b border-stone-200 bg-green-50 text-green-900">
-                      <th className="p-4">NOMBRE</th>
-                      <th className="p-4">CELULAR</th>
-                      <th className="p-4">VEREDA</th>
-                      <th className="p-4">ROL</th>
-                      <th className="p-4">USUARIO</th>
-                      <th className="p-4">CREDENCIAL</th>
-                      <th className="p-4">ACCIONES</th>
-                    </tr>
-                  </thead>
+              {users.length === 0 ? (
+                <section className="rounded-2xl bg-stone-50 p-8 text-center">
+                  <h3 className="text-xl font-black text-green-900">
+                    AÚN NO HAY USUARIOS
+                  </h3>
 
-                  <tbody>
-                    {users.map((user) => {
-                      const credentialUuid = user.credential?.uuid
-                      const currentRole = user.credential?.role || 'CLIENT'
-                      const isCredentialBeingUpdated =
-                        credentialBeingUpdated === credentialUuid
+                  <p className="mt-2 text-stone-600">
+                    Cuando los clientes se registren, aparecerán en este listado.
+                  </p>
+                </section>
+              ) : filteredUsers.length === 0 ? (
+                <section className="rounded-2xl bg-stone-50 p-8 text-center">
+                  <h3 className="text-xl font-black text-green-900">
+                    NO HAY USUARIOS PARA ESTA BÚSQUEDA
+                  </h3>
 
-                      return (
-                        <tr
-                          key={user.uuid}
-                          className="border-b border-stone-100 hover:bg-stone-50"
-                        >
-                          <td className="p-4 font-bold text-green-900">
-                            {user.fullName}
-                          </td>
+                  <p className="mt-2 text-stone-600">
+                    Prueba con otro nombre, celular, vereda, rol o estado.
+                  </p>
+                </section>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[1150px] border-collapse text-left">
+                    <thead>
+                      <tr className="border-b border-stone-200 bg-green-50 text-green-900">
+                        <th className="p-4">NOMBRE</th>
+                        <th className="p-4">CELULAR</th>
+                        <th className="p-4">VEREDA</th>
+                        <th className="p-4">ROL</th>
+                        <th className="p-4">USUARIO</th>
+                        <th className="p-4">CREDENCIAL</th>
+                        <th className="p-4">ACCIONES</th>
+                      </tr>
+                    </thead>
 
-                          <td className="p-4 font-semibold text-stone-700">
-                            {user.phone ||
-                              user.credential?.phone ||
-                              'SIN CELULAR'}
-                          </td>
+                    <tbody>
+                      {filteredUsers.map((user) => {
+                        const credentialUuid = user.credential?.uuid
+                        const currentRole = user.credential?.role || 'CLIENT'
+                        const isCredentialBeingUpdated =
+                          credentialBeingUpdated === credentialUuid
 
-                          <td className="p-4 text-stone-700">
-                            {user.village || 'SIN VEREDA'}
-                          </td>
+                        return (
+                          <tr
+                            key={user.uuid}
+                            className="border-b border-stone-100 hover:bg-stone-50"
+                          >
+                            <td className="p-4 font-bold text-green-900">
+                              {user.fullName}
+                            </td>
 
-                          <td className="p-4">
-                            <span
-                              className={`rounded-full px-3 py-1 text-sm font-bold ${
-                                currentRole === 'ADMIN'
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-stone-100 text-stone-700'
-                              }`}
-                            >
-                              {currentRole}
-                            </span>
-                          </td>
+                            <td className="p-4 font-semibold text-stone-700">
+                              {user.phone ||
+                                user.credential?.phone ||
+                                'SIN CELULAR'}
+                            </td>
 
-                          <td className="p-4">
-                            <span
-                              className={`rounded-full px-3 py-1 text-sm font-bold ${
-                                user.isActive
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                            >
-                              {user.isActive ? 'ACTIVO' : 'INACTIVO'}
-                            </span>
-                          </td>
+                            <td className="p-4 text-stone-700">
+                              {user.village || 'SIN VEREDA'}
+                            </td>
 
-                          <td className="p-4">
-                            <span
-                              className={`rounded-full px-3 py-1 text-sm font-bold ${
-                                user.credential?.isActive
-                                  ? 'bg-green-100 text-green-800'
-                                  : 'bg-red-100 text-red-700'
-                              }`}
-                            >
-                              {user.credential?.isActive
-                                ? 'ACTIVA'
-                                : 'INACTIVA'}
-                            </span>
-                          </td>
-
-                          <td className="p-4">
-                            <div className="flex flex-wrap gap-2">
-                              {user.credential?.isActive ? (
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    handleDeactivateCredential(user)
-                                  }
-                                  disabled={isCredentialBeingUpdated}
-                                  className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {isCredentialBeingUpdated
-                                    ? 'DESACTIVANDO...'
-                                    : 'DESACTIVAR'}
-                                </button>
-                              ) : (
-                                <button
-                                  type="button"
-                                  onClick={() => handleActivateCredential(user)}
-                                  disabled={isCredentialBeingUpdated}
-                                  className="rounded-full border border-green-200 px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  {isCredentialBeingUpdated
-                                    ? 'ACTIVANDO...'
-                                    : 'ACTIVAR'}
-                                </button>
-                              )}
-
-                              <button
-                                type="button"
-                                onClick={() => handleChangeRole(user)}
-                                disabled={isCredentialBeingUpdated}
-                                className="rounded-full border border-stone-300 px-4 py-2 text-sm font-bold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
+                            <td className="p-4">
+                              <span
+                                className={`rounded-full px-3 py-1 text-sm font-bold ${
+                                  currentRole === 'ADMIN'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-stone-100 text-stone-700'
+                                }`}
                               >
-                                {currentRole === 'ADMIN'
-                                  ? 'HACER CLIENTE'
-                                  : 'HACER ADMIN'}
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                {currentRole}
+                              </span>
+                            </td>
+
+                            <td className="p-4">
+                              <span
+                                className={`rounded-full px-3 py-1 text-sm font-bold ${
+                                  user.isActive
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-700'
+                                }`}
+                              >
+                                {user.isActive ? 'ACTIVO' : 'INACTIVO'}
+                              </span>
+                            </td>
+
+                            <td className="p-4">
+                              <span
+                                className={`rounded-full px-3 py-1 text-sm font-bold ${
+                                  user.credential?.isActive
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-red-100 text-red-700'
+                                }`}
+                              >
+                                {user.credential?.isActive
+                                  ? 'ACTIVA'
+                                  : 'INACTIVA'}
+                              </span>
+                            </td>
+
+                            <td className="p-4">
+                              <div className="flex flex-wrap gap-2">
+                                {user.credential?.isActive ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleDeactivateCredential(user)
+                                    }
+                                    disabled={isCredentialBeingUpdated}
+                                    className="rounded-full border border-red-200 px-4 py-2 text-sm font-bold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {isCredentialBeingUpdated
+                                      ? 'DESACTIVANDO...'
+                                      : 'DESACTIVAR'}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      handleActivateCredential(user)
+                                    }
+                                    disabled={isCredentialBeingUpdated}
+                                    className="rounded-full border border-green-200 px-4 py-2 text-sm font-bold text-green-800 hover:bg-green-50 disabled:cursor-not-allowed disabled:opacity-60"
+                                  >
+                                    {isCredentialBeingUpdated
+                                      ? 'ACTIVANDO...'
+                                      : 'ACTIVAR'}
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleChangeRole(user)}
+                                  disabled={isCredentialBeingUpdated}
+                                  className="rounded-full border border-stone-300 px-4 py-2 text-sm font-bold text-stone-700 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60"
+                                >
+                                  {currentRole === 'ADMIN'
+                                    ? 'HACER CLIENTE'
+                                    : 'HACER ADMIN'}
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </>
           )}
         </section>
