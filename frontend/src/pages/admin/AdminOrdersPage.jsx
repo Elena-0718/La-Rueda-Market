@@ -14,6 +14,24 @@ import {
   updateDeliveryStatusAdmin,
 } from '../../api/deliveriesService'
 
+const ORDER_FILTERS = {
+  ALL: 'ALL',
+  PAYMENT_PENDING: 'PAYMENT_PENDING',
+  SCHEDULED_DELIVERY: 'SCHEDULED_DELIVERY',
+  TO_DELIVER: 'TO_DELIVER',
+}
+
+const getFilterLabel = (filter) => {
+  const labels = {
+    [ORDER_FILTERS.ALL]: 'Todos los pedidos',
+    [ORDER_FILTERS.PAYMENT_PENDING]: 'Pagos pendientes',
+    [ORDER_FILTERS.SCHEDULED_DELIVERY]: 'Domicilios programados',
+    [ORDER_FILTERS.TO_DELIVER]: 'Pedidos por entregar',
+  }
+
+  return labels[filter] || 'Todos los pedidos'
+}
+
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
@@ -126,10 +144,19 @@ const getOrderBadgeType = (status) => {
   return 'stone'
 }
 
+const getSummaryCardClass = (isActive) => {
+  if (isActive) {
+    return 'rounded-3xl border-2 border-green-800 bg-green-50 p-5 text-left shadow cursor-pointer'
+  }
+
+  return 'rounded-3xl border-2 border-transparent bg-white p-5 text-left shadow cursor-pointer hover:border-green-200 hover:bg-green-50'
+}
+
 function AdminOrdersPage() {
   const navigate = useNavigate()
 
   const [orders, setOrders] = useState([])
+  const [activeFilter, setActiveFilter] = useState(ORDER_FILTERS.ALL)
   const [isLoading, setIsLoading] = useState(true)
   const [isWorking, setIsWorking] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -146,11 +173,20 @@ function AdminOrdersPage() {
       (order) => order.fulfillmentType === 'SCHEDULED_DELIVERY',
     ).length
 
-    const pendingDeliveries = orders.filter(
-      (order) =>
+    const pendingDeliveries = orders.filter((order) => {
+      if (order.status === 'DELIVERED' || order.status === 'CANCELLED') {
+        return false
+      }
+
+      if (order.fulfillmentType === 'PICKUP') {
+        return true
+      }
+
+      return (
         order.fulfillmentType === 'SCHEDULED_DELIVERY' &&
-        (!order.delivery || order.delivery.status !== 'DELIVERED'),
-    ).length
+        (!order.delivery || order.delivery.status !== 'DELIVERED')
+      )
+    }).length
 
     return {
       totalOrders,
@@ -159,6 +195,43 @@ function AdminOrdersPage() {
       pendingDeliveries,
     }
   }, [orders])
+
+  const filteredOrders = useMemo(() => {
+    if (activeFilter === ORDER_FILTERS.ALL) {
+      return orders
+    }
+
+    if (activeFilter === ORDER_FILTERS.PAYMENT_PENDING) {
+      return orders.filter(
+        (order) => !order.payment || order.payment.status === 'PENDING',
+      )
+    }
+
+    if (activeFilter === ORDER_FILTERS.SCHEDULED_DELIVERY) {
+      return orders.filter(
+        (order) => order.fulfillmentType === 'SCHEDULED_DELIVERY',
+      )
+    }
+
+    if (activeFilter === ORDER_FILTERS.TO_DELIVER) {
+      return orders.filter((order) => {
+        if (order.status === 'DELIVERED' || order.status === 'CANCELLED') {
+          return false
+        }
+
+        if (order.fulfillmentType === 'PICKUP') {
+          return true
+        }
+
+        return (
+          order.fulfillmentType === 'SCHEDULED_DELIVERY' &&
+          (!order.delivery || order.delivery.status !== 'DELIVERED')
+        )
+      })
+    }
+
+    return orders
+  }, [orders, activeFilter])
 
   const loadOrders = async () => {
     try {
@@ -325,33 +398,67 @@ function AdminOrdersPage() {
         </header>
 
         <section className="mt-6 grid gap-4 md:grid-cols-4">
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(ORDER_FILTERS.ALL)}
+            className={getSummaryCardClass(activeFilter === ORDER_FILTERS.ALL)}
+          >
             <p className="text-sm font-black text-stone-500">PEDIDOS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.totalOrders}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              VER TODOS
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(ORDER_FILTERS.PAYMENT_PENDING)}
+            className={getSummaryCardClass(
+              activeFilter === ORDER_FILTERS.PAYMENT_PENDING,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">PAGOS PENDIENTES</p>
             <p className="mt-2 text-3xl font-black text-amber-700">
               {summary.pendingPayments}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(ORDER_FILTERS.SCHEDULED_DELIVERY)}
+            className={getSummaryCardClass(
+              activeFilter === ORDER_FILTERS.SCHEDULED_DELIVERY,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">DOMICILIOS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.scheduledDeliveries}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(ORDER_FILTERS.TO_DELIVER)}
+            className={getSummaryCardClass(
+              activeFilter === ORDER_FILTERS.TO_DELIVER,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">POR ENTREGAR</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.pendingDeliveries}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
         </section>
 
         {successMessage && (
@@ -386,256 +493,279 @@ function AdminOrdersPage() {
 
         {!isLoading && orders.length > 0 && (
           <section className="mt-6 overflow-hidden rounded-3xl bg-white shadow">
-            <div className="flex flex-col gap-2 border-b border-stone-100 p-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex flex-col gap-3 border-b border-stone-100 p-6 md:flex-row md:items-center md:justify-between">
               <div>
                 <h2 className="text-2xl font-black text-green-900">
                   LISTADO DE PEDIDOS
                 </h2>
                 <p className="mt-1 text-sm font-semibold text-stone-600">
-                  ADMINISTRA EL FLUJO OPERATIVO DE LA RUEDA MARKET.
+                  FILTRO ACTIVO: {getFilterLabel(activeFilter)}
                 </p>
               </div>
 
-              <p className="font-black text-green-900">
-                {orders.length} PEDIDOS REGISTRADOS
-              </p>
+              <div className="flex flex-col gap-2 md:items-end">
+                <p className="font-black text-green-900">
+                  {filteredOrders.length} DE {orders.length} PEDIDOS
+                </p>
+
+                {activeFilter !== ORDER_FILTERS.ALL && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveFilter(ORDER_FILTERS.ALL)}
+                    className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50"
+                  >
+                    VER TODOS
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1150px] text-left">
-                <thead className="bg-green-50 text-sm text-green-950">
-                  <tr>
-                    <th className="px-5 py-4 font-black">PEDIDO</th>
-                    <th className="px-5 py-4 font-black">CLIENTE</th>
-                    <th className="px-5 py-4 font-black">ENTREGA</th>
-                    <th className="px-5 py-4 font-black">PAGO</th>
-                    <th className="px-5 py-4 font-black">ESTADO</th>
-                    <th className="px-5 py-4 font-black">TOTAL</th>
-                    <th className="px-5 py-4 font-black">ACCIONES</th>
-                  </tr>
-                </thead>
+            {filteredOrders.length === 0 ? (
+              <section className="p-8 text-center">
+                <h3 className="text-xl font-black text-green-900">
+                  NO HAY PEDIDOS PARA ESTE FILTRO
+                </h3>
+                <p className="mt-2 text-stone-600">
+                  Selecciona otra tarjeta o vuelve a ver todos los pedidos.
+                </p>
+              </section>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1150px] text-left">
+                  <thead className="bg-green-50 text-sm text-green-950">
+                    <tr>
+                      <th className="px-5 py-4 font-black">PEDIDO</th>
+                      <th className="px-5 py-4 font-black">CLIENTE</th>
+                      <th className="px-5 py-4 font-black">ENTREGA</th>
+                      <th className="px-5 py-4 font-black">PAGO</th>
+                      <th className="px-5 py-4 font-black">ESTADO</th>
+                      <th className="px-5 py-4 font-black">TOTAL</th>
+                      <th className="px-5 py-4 font-black">ACCIONES</th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {orders.map((order) => (
-                    <tr
-                      key={order.uuid}
-                      className="border-b border-stone-100 align-top"
-                    >
-                      <td className="px-5 py-5">
-                        <p className="font-black text-green-900">
-                          #{order.uuid.slice(0, 8).toUpperCase()}
-                        </p>
-                        <p className="mt-1 text-xs font-semibold text-stone-500">
-                          {formatDate(order.createdAt)}
-                        </p>
-                        <p className="mt-2 text-xs text-stone-600">
-                          {order.shippingAddress || 'SIN REFERENCIA'}
-                        </p>
-                      </td>
+                  <tbody>
+                    {filteredOrders.map((order) => (
+                      <tr
+                        key={order.uuid}
+                        className="border-b border-stone-100 align-top"
+                      >
+                        <td className="px-5 py-5">
+                          <p className="font-black text-green-900">
+                            #{order.uuid.slice(0, 8).toUpperCase()}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-stone-500">
+                            {formatDate(order.createdAt)}
+                          </p>
+                          <p className="mt-2 text-xs text-stone-600">
+                            {order.shippingAddress || 'SIN REFERENCIA'}
+                          </p>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <p className="font-black text-green-950">
-                          {order.user?.fullName ||
-                            order.user?.name ||
-                            'SIN NOMBRE'}
-                        </p>
-                        <p className="mt-1 text-sm text-stone-600">
-                          {order.shippingPhone ||
-                            order.user?.phone ||
-                            'NO REGISTRADO'}
-                        </p>
-                      </td>
+                        <td className="px-5 py-5">
+                          <p className="font-black text-green-950">
+                            {order.user?.fullName ||
+                              order.user?.name ||
+                              'SIN NOMBRE'}
+                          </p>
+                          <p className="mt-1 text-sm text-stone-600">
+                            {order.shippingPhone ||
+                              order.user?.phone ||
+                              'NO REGISTRADO'}
+                          </p>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <p className="font-black text-green-900">
-                          {getFulfillmentLabel(order.fulfillmentType)}
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-stone-600">
-                          {getDeliveryLabel(order)}
-                        </p>
-                        <p className="mt-1 text-sm text-stone-600">
-                          Domicilio: {formatCurrency(order.deliveryCost)}
-                        </p>
-                      </td>
+                        <td className="px-5 py-5">
+                          <p className="font-black text-green-900">
+                            {getFulfillmentLabel(order.fulfillmentType)}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-stone-600">
+                            {getDeliveryLabel(order)}
+                          </p>
+                          <p className="mt-1 text-sm text-stone-600">
+                            Domicilio: {formatCurrency(order.deliveryCost)}
+                          </p>
+                        </td>
 
-                      <td className="px-5 py-5">
-                        <span className={getBadgeClass(getPaymentBadgeType(order.payment))}>
-                          {getPaymentLabel(order.payment)}
-                        </span>
+                        <td className="px-5 py-5">
+                          <span className={getBadgeClass(getPaymentBadgeType(order.payment))}>
+                            {getPaymentLabel(order.payment)}
+                          </span>
 
-                        {order.payment && (
-                          <div className="mt-3 space-y-1 text-xs text-stone-600">
-                            <p>
-                              <span className="font-bold">Método: </span>
-                              {getPaymentMethodLabel(order.payment.method)}
-                            </p>
-                            <p>
-                              <span className="font-bold">Ref: </span>
-                              {order.payment.reference || 'SIN REFERENCIA'}
-                            </p>
-                            <p>
-                              <span className="font-bold">Notas: </span>
-                              {order.payment.paymentNotes || 'SIN NOTAS'}
-                            </p>
-                          </div>
-                        )}
-                      </td>
-
-                      <td className="px-5 py-5">
-                        <span className={getBadgeClass(getOrderBadgeType(order.status))}>
-                          {getOrderStatusLabel(order.status)}
-                        </span>
-                      </td>
-
-                      <td className="px-5 py-5">
-                        <p className="text-xl font-black text-green-900">
-                          {formatCurrency(order.total)}
-                        </p>
-                      </td>
-
-                      <td className="px-5 py-5">
-                        <div className="flex min-w-[260px] flex-wrap gap-2">
-                          {order.payment?.status === 'PENDING' && (
-                            <>
-                              <button
-                                type="button"
-                                disabled={isWorking}
-                                onClick={() => handleConfirmPayment(order)}
-                                className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
-                              >
-                                CONFIRMAR PAGO
-                              </button>
-
-                              <button
-                                type="button"
-                                disabled={isWorking}
-                                onClick={() => handleRejectPayment(order.payment.uuid)}
-                                className="rounded-full border border-red-500 px-4 py-2 text-xs font-black text-red-700 hover:bg-red-50 disabled:border-stone-300 disabled:text-stone-400"
-                              >
-                                RECHAZAR
-                              </button>
-                            </>
+                          {order.payment && (
+                            <div className="mt-3 space-y-1 text-xs text-stone-600">
+                              <p>
+                                <span className="font-bold">Método: </span>
+                                {getPaymentMethodLabel(order.payment.method)}
+                              </p>
+                              <p>
+                                <span className="font-bold">Ref: </span>
+                                {order.payment.reference || 'SIN REFERENCIA'}
+                              </p>
+                              <p>
+                                <span className="font-bold">Notas: </span>
+                                {order.payment.paymentNotes || 'SIN NOTAS'}
+                              </p>
+                            </div>
                           )}
+                        </td>
 
-                          {!order.payment && (
-                            <span className="rounded-full bg-amber-100 px-4 py-2 text-xs font-black text-amber-800">
-                              ESPERANDO PAGO
-                            </span>
-                          )}
+                        <td className="px-5 py-5">
+                          <span className={getBadgeClass(getOrderBadgeType(order.status))}>
+                            {getOrderStatusLabel(order.status)}
+                          </span>
+                        </td>
 
-                          {order.fulfillmentType === 'PICKUP' &&
-                            order.status !== 'DELIVERED' &&
-                            order.status !== 'CANCELLED' && (
+                        <td className="px-5 py-5">
+                          <p className="text-xl font-black text-green-900">
+                            {formatCurrency(order.total)}
+                          </p>
+                        </td>
+
+                        <td className="px-5 py-5">
+                          <div className="flex min-w-[260px] flex-wrap gap-2">
+                            {order.payment?.status === 'PENDING' && (
                               <>
                                 <button
                                   type="button"
                                   disabled={isWorking}
-                                  onClick={() =>
-                                    handleUpdateOrderStatus(order.uuid, 'PREPARING')
-                                  }
-                                  className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
+                                  onClick={() => handleConfirmPayment(order)}
+                                  className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
                                 >
-                                  PREPARAR
+                                  CONFIRMAR PAGO
                                 </button>
 
                                 <button
                                   type="button"
                                   disabled={isWorking}
-                                  onClick={() =>
-                                    handleUpdateOrderStatus(order.uuid, 'DELIVERED')
-                                  }
-                                  className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
+                                  onClick={() => handleRejectPayment(order.payment.uuid)}
+                                  className="rounded-full border border-red-500 px-4 py-2 text-xs font-black text-red-700 hover:bg-red-50 disabled:border-stone-300 disabled:text-stone-400"
                                 >
-                                  ENTREGADO
+                                  RECHAZAR
                                 </button>
                               </>
                             )}
 
-                          {canCreateDelivery(order) && (
-                            <button
-                              type="button"
-                              disabled={isWorking}
-                              onClick={() => handleCreateDelivery(order)}
-                              className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
-                            >
-                              CREAR DOMICILIO
-                            </button>
-                          )}
-
-                          {order.fulfillmentType === 'SCHEDULED_DELIVERY' &&
-                            !order.delivery &&
-                            !canCreateDelivery(order) && (
-                              <span className="rounded-full bg-stone-100 px-4 py-2 text-xs font-black text-stone-600">
-                                DOMICILIO AL CONFIRMAR PAGO
+                            {!order.payment && (
+                              <span className="rounded-full bg-amber-100 px-4 py-2 text-xs font-black text-amber-800">
+                                ESPERANDO PAGO
                               </span>
                             )}
 
-                          {order.delivery &&
-                            order.delivery.status !== 'DELIVERED' &&
-                            order.delivery.status !== 'CANCELLED' && (
-                              <>
-                                <button
-                                  type="button"
-                                  disabled={isWorking}
-                                  onClick={() =>
-                                    handleUpdateDeliveryStatus(
-                                      order.delivery.uuid,
-                                      'PREPARING',
-                                    )
-                                  }
-                                  className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
-                                >
-                                  PREPARANDO
-                                </button>
+                            {order.fulfillmentType === 'PICKUP' &&
+                              order.status !== 'DELIVERED' &&
+                              order.status !== 'CANCELLED' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() =>
+                                      handleUpdateOrderStatus(order.uuid, 'PREPARING')
+                                    }
+                                    className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
+                                  >
+                                    PREPARAR
+                                  </button>
 
-                                <button
-                                  type="button"
-                                  disabled={isWorking}
-                                  onClick={() =>
-                                    handleUpdateDeliveryStatus(
-                                      order.delivery.uuid,
-                                      'ON_THE_WAY',
-                                    )
-                                  }
-                                  className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
-                                >
-                                  EN CAMINO
-                                </button>
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() =>
+                                      handleUpdateOrderStatus(order.uuid, 'DELIVERED')
+                                    }
+                                    className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
+                                  >
+                                    ENTREGADO
+                                  </button>
+                                </>
+                              )}
 
-                                <button
-                                  type="button"
-                                  disabled={isWorking}
-                                  onClick={() =>
-                                    handleUpdateDeliveryStatus(
-                                      order.delivery.uuid,
-                                      'DELIVERED',
-                                    )
-                                  }
-                                  className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
-                                >
-                                  ENTREGADO
-                                </button>
-                              </>
-                            )}
-
-                          {order.status !== 'CANCELLED' &&
-                            order.status !== 'DELIVERED' && (
+                            {canCreateDelivery(order) && (
                               <button
                                 type="button"
                                 disabled={isWorking}
-                                onClick={() => handleCancelOrder(order.uuid)}
-                                className="rounded-full border border-red-500 px-4 py-2 text-xs font-black text-red-700 hover:bg-red-50 disabled:border-stone-300 disabled:text-stone-400"
+                                onClick={() => handleCreateDelivery(order)}
+                                className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
                               >
-                                CANCELAR
+                                CREAR DOMICILIO
                               </button>
                             )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+
+                            {order.fulfillmentType === 'SCHEDULED_DELIVERY' &&
+                              !order.delivery &&
+                              !canCreateDelivery(order) && (
+                                <span className="rounded-full bg-stone-100 px-4 py-2 text-xs font-black text-stone-600">
+                                  DOMICILIO AL CONFIRMAR PAGO
+                                </span>
+                              )}
+
+                            {order.delivery &&
+                              order.delivery.status !== 'DELIVERED' &&
+                              order.delivery.status !== 'CANCELLED' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() =>
+                                      handleUpdateDeliveryStatus(
+                                        order.delivery.uuid,
+                                        'PREPARING',
+                                      )
+                                    }
+                                    className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
+                                  >
+                                    PREPARANDO
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() =>
+                                      handleUpdateDeliveryStatus(
+                                        order.delivery.uuid,
+                                        'ON_THE_WAY',
+                                      )
+                                    }
+                                    className="rounded-full border border-green-700 px-4 py-2 text-xs font-black text-green-800 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
+                                  >
+                                    EN CAMINO
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    disabled={isWorking}
+                                    onClick={() =>
+                                      handleUpdateDeliveryStatus(
+                                        order.delivery.uuid,
+                                        'DELIVERED',
+                                      )
+                                    }
+                                    className="rounded-full bg-green-800 px-4 py-2 text-xs font-black text-white hover:bg-green-900 disabled:bg-stone-400"
+                                  >
+                                    ENTREGADO
+                                  </button>
+                                </>
+                              )}
+
+                            {order.status !== 'CANCELLED' &&
+                              order.status !== 'DELIVERED' && (
+                                <button
+                                  type="button"
+                                  disabled={isWorking}
+                                  onClick={() => handleCancelOrder(order.uuid)}
+                                  className="rounded-full border border-red-500 px-4 py-2 text-xs font-black text-red-700 hover:bg-red-50 disabled:border-stone-300 disabled:text-stone-400"
+                                >
+                                  CANCELAR
+                                </button>
+                              )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         )}
       </section>
