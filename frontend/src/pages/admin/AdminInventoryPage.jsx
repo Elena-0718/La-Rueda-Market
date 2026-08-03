@@ -12,6 +12,34 @@ import {
 } from '../../api/inventoryMovementsService'
 import { getProducts } from '../../api/productsService'
 
+const INVENTORY_FILTERS = {
+  ALL: 'ALL',
+  LOW_STOCK: 'LOW_STOCK',
+  NEAR_EXPIRATION: 'NEAR_EXPIRATION',
+  EXPIRED: 'EXPIRED',
+  MOVEMENTS: 'MOVEMENTS',
+}
+
+const getInventoryFilterLabel = (filter) => {
+  const labels = {
+    [INVENTORY_FILTERS.ALL]: 'Todos los productos controlados',
+    [INVENTORY_FILTERS.LOW_STOCK]: 'Productos con bajo stock',
+    [INVENTORY_FILTERS.NEAR_EXPIRATION]: 'Productos próximos a vencer',
+    [INVENTORY_FILTERS.EXPIRED]: 'Productos vencidos',
+    [INVENTORY_FILTERS.MOVEMENTS]: 'Productos con movimientos',
+  }
+
+  return labels[filter] || 'Todos los productos controlados'
+}
+
+const getSummaryCardClass = (isActive) => {
+  if (isActive) {
+    return 'rounded-3xl border-2 border-green-800 bg-green-50 p-5 text-left shadow cursor-pointer'
+  }
+
+  return 'rounded-3xl border-2 border-transparent bg-white p-5 text-left shadow cursor-pointer hover:border-green-200 hover:bg-green-50'
+}
+
 const initialInventoryForm = {
   productUuid: '',
   currentStock: 0,
@@ -154,6 +182,8 @@ function AdminInventoryPage() {
 
   const [inventories, setInventories] = useState([])
   const [products, setProducts] = useState([])
+  const [activeFilter, setActiveFilter] = useState(INVENTORY_FILTERS.ALL)
+
   const [summary, setSummary] = useState({
     controlledProducts: 0,
     lowStock: 0,
@@ -187,6 +217,44 @@ function AdminInventoryPage() {
       (inventory) => inventory.uuid === movementForm.inventoryUuid,
     )
   }, [inventories, movementForm.inventoryUuid])
+
+  const filteredInventories = useMemo(() => {
+    if (activeFilter === INVENTORY_FILTERS.ALL) {
+      return inventories
+    }
+
+    if (activeFilter === INVENTORY_FILTERS.LOW_STOCK) {
+      return inventories.filter(
+        (inventory) => inventory.alerts?.status === 'BAJO STOCK',
+      )
+    }
+
+    if (activeFilter === INVENTORY_FILTERS.NEAR_EXPIRATION) {
+      return inventories.filter(
+        (inventory) => inventory.alerts?.status === 'PRÓXIMO A VENCER',
+      )
+    }
+
+    if (activeFilter === INVENTORY_FILTERS.EXPIRED) {
+      return inventories.filter(
+        (inventory) => inventory.alerts?.status === 'VENCIDO',
+      )
+    }
+
+    if (activeFilter === INVENTORY_FILTERS.MOVEMENTS) {
+      return inventories.filter((inventory) => {
+        const totalMovements =
+          inventory.movements?.length ||
+          inventory.inventoryMovements?.length ||
+          inventory.totalMovements ||
+          0
+
+        return Number(totalMovements) > 0
+      })
+    }
+
+    return inventories
+  }, [inventories, activeFilter])
 
   const loadData = async () => {
     try {
@@ -404,40 +472,85 @@ function AdminInventoryPage() {
         </header>
 
         <section className="mt-6 grid gap-4 md:grid-cols-5">
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(INVENTORY_FILTERS.ALL)}
+            className={getSummaryCardClass(
+              activeFilter === INVENTORY_FILTERS.ALL,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">CONTROLADOS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.controlledProducts}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              VER TODOS
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(INVENTORY_FILTERS.LOW_STOCK)}
+            className={getSummaryCardClass(
+              activeFilter === INVENTORY_FILTERS.LOW_STOCK,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">BAJO STOCK</p>
             <p className="mt-2 text-3xl font-black text-amber-700">
               {summary.lowStock}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(INVENTORY_FILTERS.NEAR_EXPIRATION)}
+            className={getSummaryCardClass(
+              activeFilter === INVENTORY_FILTERS.NEAR_EXPIRATION,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">POR VENCER</p>
             <p className="mt-2 text-3xl font-black text-amber-700">
               {summary.nearExpiration}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(INVENTORY_FILTERS.EXPIRED)}
+            className={getSummaryCardClass(
+              activeFilter === INVENTORY_FILTERS.EXPIRED,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">VENCIDOS</p>
             <p className="mt-2 text-3xl font-black text-red-700">
               {summary.expired}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(INVENTORY_FILTERS.MOVEMENTS)}
+            className={getSummaryCardClass(
+              activeFilter === INVENTORY_FILTERS.MOVEMENTS,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">MOVIMIENTOS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.totalMovements}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
         </section>
 
         {successMessage && (
@@ -805,19 +918,33 @@ function AdminInventoryPage() {
             </section>
 
             <section className="mt-6 overflow-hidden rounded-3xl bg-white shadow">
-              <div className="flex flex-col gap-2 border-b border-stone-100 p-6 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-3 border-b border-stone-100 p-6 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-2xl font-black text-green-900">
                     INVENTARIO FÍSICO
                   </h2>
+
                   <p className="mt-1 text-sm font-semibold text-stone-600">
-                    REVISA STOCK, ALERTAS Y MOVIMIENTOS POR PRODUCTO.
+                    FILTRO ACTIVO: {getInventoryFilterLabel(activeFilter)}
                   </p>
                 </div>
 
-                <p className="font-black text-green-900">
-                  {inventories.length} PRODUCTOS CONTROLADOS
-                </p>
+                <div className="flex flex-col gap-2 md:items-end">
+                  <p className="font-black text-green-900">
+                    {filteredInventories.length} DE {inventories.length}{' '}
+                    PRODUCTOS
+                  </p>
+
+                  {activeFilter !== INVENTORY_FILTERS.ALL && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveFilter(INVENTORY_FILTERS.ALL)}
+                      className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50"
+                    >
+                      VER TODOS
+                    </button>
+                  )}
+                </div>
               </div>
 
               {inventories.length === 0 ? (
@@ -828,6 +955,17 @@ function AdminInventoryPage() {
                   <p className="mt-3 text-stone-700">
                     CREA EL CONTROL DE INVENTARIO PARA LOS PRODUCTOS QUE QUIERAS
                     MANEJAR FÍSICAMENTE.
+                  </p>
+                </section>
+              ) : filteredInventories.length === 0 ? (
+                <section className="p-8 text-center">
+                  <h3 className="text-xl font-black text-green-900">
+                    NO HAY PRODUCTOS PARA ESTE FILTRO
+                  </h3>
+
+                  <p className="mt-2 text-stone-600">
+                    Selecciona otra tarjeta o vuelve a ver todos los productos
+                    controlados.
                   </p>
                 </section>
               ) : (
@@ -847,7 +985,7 @@ function AdminInventoryPage() {
                     </thead>
 
                     <tbody>
-                      {inventories.map((inventory) => (
+                      {filteredInventories.map((inventory) => (
                         <tr
                           key={inventory.uuid}
                           className="border-b border-stone-100 align-top"
