@@ -8,6 +8,32 @@ import {
 } from '../../api/recipesService'
 import { getProducts } from '../../api/productsService'
 
+const RECIPE_FILTERS = {
+  ALL: 'ALL',
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  FEATURED: 'FEATURED',
+}
+
+const getRecipeFilterLabel = (filter) => {
+  const labels = {
+    [RECIPE_FILTERS.ALL]: 'Todas las recetas',
+    [RECIPE_FILTERS.ACTIVE]: 'Recetas activas',
+    [RECIPE_FILTERS.INACTIVE]: 'Recetas inactivas',
+    [RECIPE_FILTERS.FEATURED]: 'Recetas destacadas',
+  }
+
+  return labels[filter] || 'Todas las recetas'
+}
+
+const getSummaryCardClass = (isActive) => {
+  if (isActive) {
+    return 'rounded-3xl border-2 border-green-800 bg-green-50 p-5 text-left shadow cursor-pointer'
+  }
+
+  return 'rounded-3xl border-2 border-transparent bg-white p-5 text-left shadow cursor-pointer hover:border-green-200 hover:bg-green-50'
+}
+
 const initialForm = {
   title: '',
   description: '',
@@ -49,6 +75,7 @@ function AdminRecipesPage() {
   const [products, setProducts] = useState([])
   const [formData, setFormData] = useState(initialForm)
   const [editingRecipeUuid, setEditingRecipeUuid] = useState(null)
+  const [activeFilter, setActiveFilter] = useState(RECIPE_FILTERS.ALL)
 
   const [isLoading, setIsLoading] = useState(true)
   const [isWorking, setIsWorking] = useState(false)
@@ -59,9 +86,26 @@ function AdminRecipesPage() {
     return {
       total: recipes.length,
       active: recipes.filter((recipe) => recipe.isActive).length,
+      inactive: recipes.filter((recipe) => !recipe.isActive).length,
       featured: recipes.filter((recipe) => recipe.isFeatured).length,
     }
   }, [recipes])
+
+  const filteredRecipes = useMemo(() => {
+    if (activeFilter === RECIPE_FILTERS.ACTIVE) {
+      return recipes.filter((recipe) => recipe.isActive)
+    }
+
+    if (activeFilter === RECIPE_FILTERS.INACTIVE) {
+      return recipes.filter((recipe) => !recipe.isActive)
+    }
+
+    if (activeFilter === RECIPE_FILTERS.FEATURED) {
+      return recipes.filter((recipe) => recipe.isFeatured)
+    }
+
+    return recipes
+  }, [recipes, activeFilter])
 
   const loadData = async () => {
     try {
@@ -332,27 +376,68 @@ function AdminRecipesPage() {
           </div>
         </header>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-3">
-          <article className="rounded-3xl bg-white p-5 shadow">
+        <section className="mt-6 grid gap-4 md:grid-cols-4">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(RECIPE_FILTERS.ALL)}
+            className={getSummaryCardClass(activeFilter === RECIPE_FILTERS.ALL)}
+          >
             <p className="text-sm font-black text-stone-500">RECETAS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.total}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              VER TODAS
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(RECIPE_FILTERS.ACTIVE)}
+            className={getSummaryCardClass(
+              activeFilter === RECIPE_FILTERS.ACTIVE,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">ACTIVAS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.active}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
 
-          <article className="rounded-3xl bg-white p-5 shadow">
+          <button
+            type="button"
+            onClick={() => setActiveFilter(RECIPE_FILTERS.INACTIVE)}
+            className={getSummaryCardClass(
+              activeFilter === RECIPE_FILTERS.INACTIVE,
+            )}
+          >
+            <p className="text-sm font-black text-stone-500">INACTIVAS</p>
+            <p className="mt-2 text-3xl font-black text-red-700">
+              {summary.inactive}
+            </p>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveFilter(RECIPE_FILTERS.FEATURED)}
+            className={getSummaryCardClass(
+              activeFilter === RECIPE_FILTERS.FEATURED,
+            )}
+          >
             <p className="text-sm font-black text-stone-500">DESTACADAS</p>
             <p className="mt-2 text-3xl font-black text-green-900">
               {summary.featured}
             </p>
-          </article>
+            <p className="mt-2 text-xs font-bold text-stone-500">
+              FILTRAR
+            </p>
+          </button>
         </section>
 
         {successMessage && (
@@ -654,16 +739,48 @@ function AdminRecipesPage() {
             </form>
 
             <section className="mt-6 overflow-hidden rounded-3xl bg-white shadow">
-              <div className="border-b border-stone-100 p-6">
-                <h2 className="text-2xl font-black text-green-900">
-                  RECETAS REGISTRADAS
-                </h2>
+              <div className="flex flex-col gap-3 border-b border-stone-100 p-6 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="text-2xl font-black text-green-900">
+                    RECETAS REGISTRADAS
+                  </h2>
+
+                  <p className="mt-1 text-sm font-semibold text-stone-600">
+                    FILTRO ACTIVO: {getRecipeFilterLabel(activeFilter)}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 md:items-end">
+                  <p className="font-black text-green-900">
+                    {filteredRecipes.length} DE {recipes.length} RECETAS
+                  </p>
+
+                  {activeFilter !== RECIPE_FILTERS.ALL && (
+                    <button
+                      type="button"
+                      onClick={() => setActiveFilter(RECIPE_FILTERS.ALL)}
+                      className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50"
+                    >
+                      VER TODAS
+                    </button>
+                  )}
+                </div>
               </div>
 
               {recipes.length === 0 ? (
                 <p className="p-6 font-semibold text-stone-700">
                   AÚN NO HAY RECETAS REGISTRADAS.
                 </p>
+              ) : filteredRecipes.length === 0 ? (
+                <section className="p-8 text-center">
+                  <h3 className="text-xl font-black text-green-900">
+                    NO HAY RECETAS PARA ESTE FILTRO
+                  </h3>
+
+                  <p className="mt-2 text-stone-600">
+                    Selecciona otra tarjeta o vuelve a ver todas las recetas.
+                  </p>
+                </section>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1100px] text-left">
@@ -679,7 +796,7 @@ function AdminRecipesPage() {
                     </thead>
 
                     <tbody>
-                      {recipes.map((recipe) => (
+                      {filteredRecipes.map((recipe) => (
                         <tr
                           key={recipe.uuid}
                           className="border-b border-stone-100 align-top"
