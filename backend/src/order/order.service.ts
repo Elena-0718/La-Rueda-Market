@@ -12,11 +12,18 @@ import {
   OrderStatus,
 } from '../entities/order.entity';
 import { OrderDetail } from '../entities/orderDetail.entity';
+import { Inventory } from '../entities/inventory.entity';
 import { CartStatus } from '../entities/cart.entity';
+import {
+  InventoryMovementReason,
+  InventoryMovementType,
+} from '../entities/inventory-movement.entity';
+
 import { OrderRepository } from './order.repository';
 import { CartRepository } from '../cart/cart.repository';
 import { UpdateOrderDto } from './dtos/update-order.dto';
 import { CreateOrderDto } from './dtos/create-order.dto';
+import { AdjustOrderDetailsDto } from './dtos/adjust-order-details.dto';
 
 const SCHEDULED_DELIVERY_COST = 2000;
 
@@ -116,10 +123,144 @@ export class OrderService {
       );
     }
 
+    if (order.status === OrderStatus.DELIVERED) {
+      throw new ConflictException(
+        'No se puede cambiar el estado de un pedido que ya fue entregado.',
+      );
+    }
+
+    if (dto.status === OrderStatus.DELIVERED) {
+      await this.discountInventoryForDeliveredOrder(order);
+    }
+
     return await this.orderRepository.updateOrderStatusRepository(
       order,
       dto,
     );
+  }
+
+  /* =========================
+     ADMIN: AJUSTAR PRODUCTOS DEL PEDIDO
+  ========================= */
+  async adjustOrderDetailsService(
+    orderUuid: string,
+    dto: AdjustOrderDetailsDto,
+  ) {
+    const order =
+      await this.orderRepository.getOrderByUuidRepository(orderUuid);
+
+    if (!order) {
+      throw new NotFoundException('Pedido no encontrado.');
+    }
+
+    if (order.status === OrderStatus.CANCELLED) {
+      throw new ConflictException(
+        'No se puede ajustar un pedido cancelado.',
+      );
+    }
+
+    if (order.status === OrderStatus.DELIVERED) {
+      throw new ConflictException(
+        'No se puede ajustar un pedido que ya fue entregado.',
+      );
+    }
+
+    if (!order.orderDetails || order.orderDetails.length === 0) {
+      throw new BadRequestException(
+        'El pedido no tiene productos para ajustar.',
+      );
+    }
+
+    for (const detailAdjustment of dto.details) {
+      const orderDetail = order.orderDetails.find(
+        (detail) => detail.uuid === detailAdjustment.orderDetailUuid,
+      );
+
+      if (!orderDetail) {
+        throw new NotFoundException(
+          `NO SE ENCONTRÓ EL DETALLE ${detailAdjustment.orderDetailUuid} EN ESTE PEDIDO.`,
+        );
+      }
+
+      const shouldKeep = detailAdjustment.keep ?? true;
+
+      if (shouldKeep === false || detailAdjustment.quantity === 0) {
+        await this.orderRepository.removeOrderDetailRepository(orderDetail);
+
+        order.orderDetails = order.orderDetails.filter(
+          (detail) => detail.uuid !== orderDetail.uuid,
+        );
+
+        continue;
+      }
+
+      if (detailAdjustment.quantity !== undefined) {
+        orderDetail.quantity = detailAdjustment.quantity;
+      }
+
+      if (detailAdjustment.unitPrice !== undefined) {
+        orderDetail.unitPrice = this.roundMoney(
+          Number(detailAdjustment.unitPrice),
+        );
+      }
+
+      orderDetail.subtotal = this.roundMoney(
+        Number(orderDetail.quantity || 0) *
+          Number(orderDetail.unitPrice || 0),
+      );
+
+      orderDetail.taxAmount = this.roundMoney(
+        orderDetail.subtotal *
+          (Number(orderDetail.taxRate || 0) / 100),
+      );
+
+      orderDetail.total = this.roundMoney(
+        orderDetail.subtotal + orderDetail.taxAmount,
+      );
+
+      await this.orderRepository.saveOrderDetailRepository(orderDetail);
+    }
+
+    if (!order.orderDetails || order.orderDetails.length === 0) {
+      throw new BadRequestException(
+        'No puedes dejar el pedido sin productos. Cancela el pedido si no se pudo completar.',
+      );
+    }
+
+    const recalculatedSubtotal = order.orderDetails.reduce(
+      (total, detail) => total + Number(detail.subtotal || 0),
+      0,
+    );
+
+    const recalculatedTax = order.orderDetails.reduce(
+      (total, detail) => total + Number(detail.taxAmount || 0),
+      0,
+    );
+
+    order.subtotal = this.roundMoney(recalculatedSubtotal);
+    order.tax = this.roundMoney(recalculatedTax);
+    order.total = this.roundMoney(
+      order.subtotal +
+        order.tax +
+        Number(order.deliveryCost || 0) -
+        Number(order.discount || 0),
+    );
+
+    if (dto.notes?.trim()) {
+      const previousNotes = order.deliveryNotes?.trim();
+
+      order.deliveryNotes = previousNotes
+        ? `${previousNotes} | Ajuste admin: ${dto.notes.trim()}`
+        : `Ajuste admin: ${dto.notes.trim()}`;
+    }
+
+    const savedOrder =
+      await this.orderRepository.saveOrderRepository(order);
+
+    return {
+      message: 'Pedido ajustado correctamente.',
+      order: savedOrder,
+    };
   }
 
   /* =========================
@@ -276,6 +417,108 @@ export class OrderService {
   }
 
   /* =========================
+     ADMIN: DESCONTAR INVENTARIO AL ENTREGAR
+  ========================= */
+  private async discountInventoryForDeliveredOrder(order: Order) {
+    if (!order.orderDetails || order.orderDetails.length === 0) {
+      throw new BadRequestException(
+        'No se puede entregar un pedido sin productos.',
+      );
+    }
+
+    for (const detail of order.orderDetails) {
+      const product = detail.product;
+
+      if (!product) {
+        continue;
+      }
+
+      const inventory =
+        await this.orderRepository.findInventoryByProductUuidRepository(
+          product.uuid,
+        );
+
+      if (!inventory || inventory.isTracked !== true) {
+        continue;
+      }
+
+      await this.validateInventoryAvailability(
+        inventory,
+        Number(detail.quantity || 0),
+        product.name,
+      );
+    }
+
+    for (const detail of order.orderDetails) {
+      const product = detail.product;
+
+      if (!product) {
+        continue;
+      }
+
+      const inventory =
+        await this.orderRepository.findInventoryByProductUuidRepository(
+          product.uuid,
+        );
+
+      if (!inventory || inventory.isTracked !== true) {
+        continue;
+      }
+
+      await this.applyInventoryOutputForOrder({
+        inventory,
+        quantity: Number(detail.quantity || 0),
+        orderUuid: order.uuid,
+        productName: product.name,
+      });
+    }
+  }
+
+  private async validateInventoryAvailability(
+    inventory: Inventory,
+    quantity: number,
+    productName: string,
+  ) {
+    const previousStock = Number(inventory.currentStock || 0);
+
+    if (quantity > previousStock) {
+      throw new BadRequestException(
+        `NO HAY STOCK SUFICIENTE PARA "${productName}". STOCK ACTUAL: ${previousStock}. AJUSTA EL INVENTARIO O AJUSTA EL PEDIDO ANTES DE MARCARLO COMO ENTREGADO.`,
+      );
+    }
+  }
+
+  private async applyInventoryOutputForOrder(data: {
+    inventory: Inventory;
+    quantity: number;
+    orderUuid: string;
+    productName: string;
+  }) {
+    const previousStock = Number(data.inventory.currentStock || 0);
+    const newStock = this.roundQuantity(previousStock - data.quantity);
+
+    const movement =
+      this.orderRepository.createInventoryMovementRepository({
+        inventory: data.inventory,
+        movementType: InventoryMovementType.OUT,
+        reason: InventoryMovementReason.ONLINE_SALE,
+        quantity: data.quantity,
+        previousStock,
+        newStock,
+        purchasePrice: data.inventory.lastPurchasePrice ?? null,
+        supplierName: data.inventory.supplierName ?? null,
+        expirationDate: data.inventory.expirationDate ?? null,
+        orderUuid: data.orderUuid,
+        notes: `Salida automática por pedido entregado. Producto: ${data.productName}.`,
+      });
+
+    data.inventory.currentStock = newStock;
+
+    await this.orderRepository.saveInventoryRepository(data.inventory);
+    await this.orderRepository.saveInventoryMovementRepository(movement);
+  }
+
+  /* =========================
      SHARED: DETALLE DE ORDEN
   ========================= */
   async getOrderByUuidService(
@@ -301,5 +544,13 @@ export class OrderService {
     }
 
     return order;
+  }
+
+  private roundMoney(value: number) {
+    return Number(Number(value || 0).toFixed(2));
+  }
+
+  private roundQuantity(value: number) {
+    return Number(Number(value || 0).toFixed(2));
   }
 }

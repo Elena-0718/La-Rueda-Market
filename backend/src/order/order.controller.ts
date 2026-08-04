@@ -28,6 +28,7 @@ import { RolesDecorator } from '../decorators/roles.decorator';
 import { Roles } from '../enum/roles.enum';
 import { UpdateOrderDto } from './dtos/update-order.dto';
 import { CreateOrderDto } from './dtos/create-order.dto';
+import { AdjustOrderDetailsDto } from './dtos/adjust-order-details.dto';
 
 @ApiTags('Pedidos')
 @ApiBearerAuth()
@@ -60,6 +61,8 @@ export class OrderController {
   @RolesDecorator(Roles.ADMIN)
   @ApiOperation({
     summary: 'Actualizar estado de un pedido | ADMIN',
+    description:
+      'Permite cambiar el estado del pedido. Si el pedido se marca como DELIVERED, el sistema descuenta inventario de los productos físicos controlados.',
   })
   @ApiParam({
     name: 'uuid',
@@ -73,12 +76,62 @@ export class OrderController {
     status: 200,
     description: 'Estado del pedido actualizado correctamente.',
   })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Error al actualizar el estado. Puede ocurrir si no hay stock suficiente al marcar como entregado.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Pedido no encontrado.',
+  })
   @HttpCode(HttpStatus.OK)
   updateOrderStatus(
     @Param('uuid', ParseUUIDPipe) uuid: string,
     @Body() dto: UpdateOrderDto,
   ) {
     return this.orderService.updateOrderStatusService(uuid, dto);
+  }
+
+  /* =========================
+     ADMIN: AJUSTAR PRODUCTOS DEL PEDIDO
+  ========================= */
+  @Patch('admin/:uuid/adjust-details')
+  @RolesDecorator(Roles.ADMIN)
+  @ApiOperation({
+    summary: 'Ajustar productos de un pedido antes de entregarlo | ADMIN',
+    description:
+      'Permite cambiar cantidades, cambiar precio unitario o quitar productos que no se consiguieron. El sistema recalcula subtotal, impuestos y total del pedido.',
+  })
+  @ApiParam({
+    name: 'uuid',
+    description: 'UUID del pedido a ajustar.',
+    example: 'c31a34b7-8b9a-4e71-a29a-8c26f675a1c8',
+  })
+  @ApiBody({
+    description:
+      'Lista de ajustes para los productos del pedido. Si keep es false o quantity es 0, el producto se elimina del pedido.',
+    type: AdjustOrderDetailsDto,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Pedido ajustado correctamente.',
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Error al ajustar el pedido. No se puede dejar un pedido sin productos.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Pedido o detalle de pedido no encontrado.',
+  })
+  @HttpCode(HttpStatus.OK)
+  adjustOrderDetails(
+    @Param('uuid', ParseUUIDPipe) uuid: string,
+    @Body() dto: AdjustOrderDetailsDto,
+  ) {
+    return this.orderService.adjustOrderDetailsService(uuid, dto);
   }
 
   /* =========================
@@ -97,6 +150,10 @@ export class OrderController {
   @ApiResponse({
     status: 200,
     description: 'Pedido cancelado correctamente.',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Pedido no encontrado.',
   })
   @HttpCode(HttpStatus.OK)
   cancelOrderByAdmin(
@@ -119,6 +176,10 @@ export class OrderController {
   @ApiResponse({
     status: 201,
     description: 'Pedido creado correctamente.',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Error al crear pedido desde el carrito.',
   })
   @HttpCode(HttpStatus.CREATED)
   createOrder(
@@ -162,6 +223,10 @@ export class OrderController {
     status: 200,
     description: 'Pedido cancelado correctamente.',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Pedido no encontrado.',
+  })
   @HttpCode(HttpStatus.OK)
   cancelMyOrder(
     @Req() req: any,
@@ -186,6 +251,10 @@ export class OrderController {
     status: 200,
     description: 'Detalle del pedido obtenido correctamente.',
   })
+  @ApiResponse({
+    status: 404,
+    description: 'Pedido no encontrado.',
+  })
   @HttpCode(HttpStatus.OK)
   getOrderByUuid(
     @Req() req: any,
@@ -193,4 +262,4 @@ export class OrderController {
   ) {
     return this.orderService.getOrderByUuidService(uuid, req);
   }
-}
+}  
