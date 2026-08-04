@@ -7,6 +7,7 @@ import { PhysicalSaleDetail } from '../entities/physical-sale-detail.entity';
 import { Product } from '../entities/product.entity';
 import { Inventory } from '../entities/inventory.entity';
 import { InventoryMovement } from '../entities/inventory-movement.entity';
+import { User } from '../entities/users.entity';
 
 @Injectable()
 export class PhysicalSalesRepository {
@@ -25,12 +26,16 @@ export class PhysicalSalesRepository {
 
     @InjectRepository(InventoryMovement)
     private readonly inventoryMovementsDB: Repository<InventoryMovement>,
+
+    @InjectRepository(User)
+    private readonly usersDB: Repository<User>,
   ) {}
 
   findAllActiveRepository(): Promise<PhysicalSale[]> {
     return this.physicalSalesDB.find({
       where: { isActive: true },
       relations: {
+        customerUser: true,
         details: {
           product: {
             category: true,
@@ -47,6 +52,7 @@ export class PhysicalSalesRepository {
   findAllRepository(): Promise<PhysicalSale[]> {
     return this.physicalSalesDB.find({
       relations: {
+        customerUser: true,
         details: {
           product: {
             category: true,
@@ -73,6 +79,7 @@ export class PhysicalSalesRepository {
         ),
       },
       relations: {
+        customerUser: true,
         details: {
           product: {
             category: true,
@@ -93,6 +100,7 @@ export class PhysicalSalesRepository {
         isActive: true,
       },
       relations: {
+        customerUser: true,
         details: {
           product: {
             category: true,
@@ -108,11 +116,20 @@ export class PhysicalSalesRepository {
     return this.physicalSalesDB.findOne({
       where: { uuid },
       relations: {
+        customerUser: true,
         details: {
           product: {
             category: true,
           },
         },
+      },
+    });
+  }
+
+  findUserByUuidRepository(userUuid: string): Promise<User | null> {
+    return this.usersDB.findOne({
+      where: {
+        uuid: userUuid,
       },
     });
   }

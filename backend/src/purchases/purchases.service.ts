@@ -92,6 +92,9 @@ export class PurchasesService {
         isActive: true,
       });
 
+      const savedPurchase =
+        await this.purchasesRepository.savePurchaseRepository(purchase);
+
       const details: PurchaseDetail[] = [];
       let purchaseTotal = 0;
 
@@ -108,7 +111,21 @@ export class PurchasesService {
         }
 
         const quantity = Number(detailDto.quantity);
+
+        if (!quantity || quantity <= 0) {
+          throw new BadRequestException(
+            `LA CANTIDAD DE "${product.name}" DEBE SER MAYOR A CERO.`,
+          );
+        }
+
         const unitCost = Number(detailDto.unitCost);
+
+        if (!unitCost || unitCost <= 0) {
+          throw new BadRequestException(
+            `EL COSTO UNITARIO DE "${product.name}" DEBE SER MAYOR A CERO.`,
+          );
+        }
+
         const profitPercentage = Number(detailDto.profitPercentage || 0);
 
         const suggestedSalePrice = this.calculateSuggestedSalePrice(
@@ -142,27 +159,30 @@ export class PurchasesService {
           });
         }
 
-        const detail = this.purchasesRepository.createPurchaseDetailRepository({
-          purchase,
-          product,
-          quantity,
-          unitCost,
-          profitPercentage,
-          suggestedSalePrice,
-          manualSalePrice,
-          finalSalePrice,
-          updateProductPrice: detailDto.updateProductPrice ?? false,
-          lineTotal,
-        });
+        const detail =
+          this.purchasesRepository.createPurchaseDetailRepository({
+            purchase: savedPurchase,
+            product,
+            quantity,
+            unitCost,
+            profitPercentage,
+            suggestedSalePrice,
+            manualSalePrice,
+            finalSalePrice,
+            updateProductPrice: detailDto.updateProductPrice ?? false,
+            lineTotal,
+          });
 
         details.push(detail);
         purchaseTotal += lineTotal;
       }
 
-      purchase.total = this.roundMoney(purchaseTotal);
-      purchase.details = details;
+      savedPurchase.total = this.roundMoney(purchaseTotal);
+      savedPurchase.details = details;
 
-      return await this.purchasesRepository.savePurchaseRepository(purchase);
+      return await this.purchasesRepository.savePurchaseRepository(
+        savedPurchase,
+      );
     } catch (error: unknown) {
       if (
         error instanceof BadRequestException ||
@@ -243,14 +263,30 @@ export class PurchasesService {
     }
 
     try {
-      return await this.purchasesRepository.deletePurchaseRepository(
-        purchase,
-      );
+      if (purchase.purchaseType === PurchaseType.INVENTORY) {
+        await this.reverseInventoryPurchase(purchase);
+      }
+
+      await this.purchasesRepository.deletePurchaseRepository(purchase);
+
+      return {
+        message:
+          purchase.purchaseType === PurchaseType.INVENTORY
+            ? 'La compra fue anulada correctamente y el inventario fue revertido.'
+            : 'La compra fue anulada correctamente.',
+      };
     } catch (error: unknown) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
       const message =
         error instanceof Error
           ? error.message
-          : 'OCURRIÓ UN ERROR AL ELIMINAR LA COMPRA.';
+          : 'OCURRIÓ UN ERROR AL ANULAR LA COMPRA.';
 
       throw new BadRequestException(message);
     }
@@ -319,6 +355,94 @@ export class PurchasesService {
 
     await this.purchasesRepository.saveInventoryRepository(inventory);
     await this.purchasesRepository.saveInventoryMovementRepository(movement);
+  }
+
+  private async reverseInventoryPurchase(purchase: Purchase) {
+    if (!purchase.details || purchase.details.length === 0) {
+      throw new BadRequestException(
+        'NO SE PUEDE ANULAR LA COMPRA PORQUE NO TIENE DETALLES DE PRODUCTOS.',
+      );
+    }
+
+    for (const detail of purchase.details) {
+      const product = detail.product;
+
+      if (!product) {
+        throw new BadRequestException(
+          'NO SE PUEDE ANULAR LA COMPRA PORQUE UNO DE SUS DETALLES NO TIENE PRODUCTO ASOCIADO.',
+        );
+      }
+
+      const inventory =
+        await this.purchasesRepository.findInventoryByProductUuidRepository(
+          product.uuid,
+        );
+
+      if (!inventory) {
+        throw new BadRequestException(
+          `NO SE PUEDE ANULAR LA COMPRA. EL PRODUCTO "${product.name}" NO TIENE INVENTARIO CREADO.`,
+        );
+      }
+
+      if (!inventory.isTracked) {
+        throw new BadRequestException(
+          `NO SE PUEDE ANULAR LA COMPRA. EL PRODUCTO "${product.name}" NO ESTÁ CONTROLADO EN INVENTARIO.`,
+        );
+      }
+
+      const quantityToReverse = Number(detail.quantity || 0);
+      const currentStock = Number(inventory.currentStock || 0);
+
+      if (quantityToReverse <= 0) {
+        throw new BadRequestException(
+          `LA CANTIDAD A REVERSAR DEL PRODUCTO "${product.name}" NO ES VÁLIDA.`,
+        );
+      }
+
+      if (quantityToReverse > currentStock) {
+        throw new BadRequestException(
+          `NO SE PUEDE ANULAR LA COMPRA. EL PRODUCTO "${product.name}" TIENE STOCK ACTUAL ${currentStock}, PERO LA COMPRA A REVERSAR ES DE ${quantityToReverse}. PRIMERO AJUSTA EL INVENTARIO MANUALMENTE.`,
+        );
+      }
+    }
+
+    for (const detail of purchase.details) {
+      const product = detail.product;
+      const inventory =
+        await this.purchasesRepository.findInventoryByProductUuidRepository(
+          product.uuid,
+        );
+
+      if (!inventory) {
+        throw new BadRequestException(
+          `NO SE ENCONTRÓ INVENTARIO PARA "${product.name}".`,
+        );
+      }
+
+      const quantityToReverse = Number(detail.quantity || 0);
+      const previousStock = Number(inventory.currentStock || 0);
+      const newStock = this.roundQuantity(previousStock - quantityToReverse);
+
+      const movement =
+        this.purchasesRepository.createInventoryMovementRepository({
+          inventory,
+          movementType: InventoryMovementType.OUT,
+          reason: InventoryMovementReason.NEGATIVE_ADJUSTMENT,
+          quantity: quantityToReverse,
+          previousStock,
+          newStock,
+          purchasePrice: Number(detail.unitCost || 0),
+          supplierName: purchase.supplierName?.trim() || null,
+          expirationDate: null,
+          orderUuid: purchase.relatedOrderUuid || null,
+          notes: `Reversión automática por anulación de compra ${purchase.uuid}. Producto: ${product.name}. Cantidad reversada: ${quantityToReverse}.`,
+        });
+
+      inventory.currentStock = newStock;
+
+      await this.purchasesRepository.saveInventoryRepository(inventory);
+      await this.purchasesRepository.saveInventoryMovementRepository(movement);
+    }
   }
 
   private calculateSuggestedSalePrice(

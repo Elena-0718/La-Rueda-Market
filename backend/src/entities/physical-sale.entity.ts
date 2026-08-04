@@ -6,10 +6,12 @@ import {
   UpdateDateColumn,
   Index,
   OneToMany,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
+
 import { PhysicalSaleDetail } from './physical-sale-detail.entity';
-
-
+import { User } from './users.entity';
 
 export enum PhysicalSalePaymentMethod {
   CASH = 'CASH',
@@ -32,6 +34,23 @@ export class PhysicalSale {
     comment: 'Fecha en la que se realizó la venta física en el local',
   })
   saleDate: Date;
+
+  @Column({
+    type: 'varchar',
+    length: 150,
+    nullable: true,
+    name: 'customer_name',
+    comment:
+      'Nombre del cliente local cuando la venta física no está asociada a un usuario registrado',
+  })
+  customerName?: string | null;
+
+  @ManyToOne(() => User, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'customer_user_uuid' })
+  customerUser?: User | null;
 
   @Column({
     type: 'enum',

@@ -7,6 +7,7 @@ import {
 import { PhysicalSale } from '../entities/physical-sale.entity';
 import { PhysicalSaleDetail } from '../entities/physical-sale-detail.entity';
 import { Product } from '../entities/product.entity';
+import { User } from '../entities/users.entity';
 import {
   InventoryMovementReason,
   InventoryMovementType,
@@ -82,15 +83,37 @@ export class PhysicalSalesService {
 
   async create(dto: CreatePhysicalSaleDto): Promise<PhysicalSale> {
     try {
+      let customerUser: User | null = null;
+
+      if (dto.customerUserUuid) {
+        customerUser =
+          await this.physicalSalesRepository.findUserByUuidRepository(
+            dto.customerUserUuid,
+          );
+
+        if (!customerUser) {
+          throw new NotFoundException(
+            `NO SE ENCONTRÓ UN CLIENTE CON EL ID ${dto.customerUserUuid}.`,
+          );
+        }
+      }
+
       const physicalSale =
         this.physicalSalesRepository.createPhysicalSaleRepository({
           saleDate: this.parseDateOnly(dto.saleDate),
+          customerName: dto.customerName?.trim() || 'Cliente local',
+          customerUser,
           paymentMethod: dto.paymentMethod,
           subtotal: 0,
           total: 0,
           notes: dto.notes?.trim() || null,
           isActive: true,
         });
+
+      const savedPhysicalSale =
+        await this.physicalSalesRepository.savePhysicalSaleRepository(
+          physicalSale,
+        );
 
       const details: PhysicalSaleDetail[] = [];
       let saleTotal = 0;
@@ -108,6 +131,13 @@ export class PhysicalSalesService {
         }
 
         const quantity = Number(detailDto.quantity);
+
+        if (!quantity || quantity <= 0) {
+          throw new BadRequestException(
+            `LA CANTIDAD DE "${product.name}" DEBE SER MAYOR A CERO.`,
+          );
+        }
+
         const unitPrice =
           detailDto.unitPrice !== undefined && detailDto.unitPrice !== null
             ? this.roundMoney(Number(detailDto.unitPrice))
@@ -130,7 +160,7 @@ export class PhysicalSalesService {
 
         const detail =
           this.physicalSalesRepository.createPhysicalSaleDetailRepository({
-            physicalSale,
+            physicalSale: savedPhysicalSale,
             product,
             quantity,
             unitPrice,
@@ -141,12 +171,12 @@ export class PhysicalSalesService {
         saleTotal += lineTotal;
       }
 
-      physicalSale.subtotal = this.roundMoney(saleTotal);
-      physicalSale.total = this.roundMoney(saleTotal);
-      physicalSale.details = details;
+      savedPhysicalSale.subtotal = this.roundMoney(saleTotal);
+      savedPhysicalSale.total = this.roundMoney(saleTotal);
+      savedPhysicalSale.details = details;
 
       return await this.physicalSalesRepository.savePhysicalSaleRepository(
-        physicalSale,
+        savedPhysicalSale,
       );
     } catch (error: unknown) {
       if (
@@ -224,14 +254,28 @@ export class PhysicalSalesService {
     }
 
     try {
-      return await this.physicalSalesRepository.deletePhysicalSaleRepository(
+      await this.reversePhysicalSaleInventory(physicalSale);
+
+      await this.physicalSalesRepository.deletePhysicalSaleRepository(
         physicalSale,
       );
+
+      return {
+        message:
+          'La venta física fue anulada correctamente y el inventario fue devuelto.',
+      };
     } catch (error: unknown) {
+      if (
+        error instanceof BadRequestException ||
+        error instanceof NotFoundException
+      ) {
+        throw error;
+      }
+
       const message =
         error instanceof Error
           ? error.message
-          : 'OCURRIÓ UN ERROR AL ELIMINAR LA VENTA FÍSICA.';
+          : 'OCURRIÓ UN ERROR AL ANULAR LA VENTA FÍSICA.';
 
       throw new BadRequestException(message);
     }
@@ -293,6 +337,89 @@ export class PhysicalSalesService {
     await this.physicalSalesRepository.saveInventoryMovementRepository(
       movement,
     );
+  }
+
+  private async reversePhysicalSaleInventory(physicalSale: PhysicalSale) {
+    if (!physicalSale.details || physicalSale.details.length === 0) {
+      throw new BadRequestException(
+        'NO SE PUEDE ANULAR LA VENTA FÍSICA PORQUE NO TIENE DETALLES DE PRODUCTOS.',
+      );
+    }
+
+    for (const detail of physicalSale.details) {
+      const product = detail.product;
+
+      if (!product) {
+        throw new BadRequestException(
+          'NO SE PUEDE ANULAR LA VENTA FÍSICA PORQUE UNO DE SUS DETALLES NO TIENE PRODUCTO ASOCIADO.',
+        );
+      }
+
+      const inventory =
+        await this.physicalSalesRepository.findInventoryByProductUuidRepository(
+          product.uuid,
+        );
+
+      if (!inventory) {
+        throw new BadRequestException(
+          `NO SE PUEDE ANULAR LA VENTA FÍSICA. EL PRODUCTO "${product.name}" NO TIENE INVENTARIO CREADO.`,
+        );
+      }
+
+      if (!inventory.isTracked) {
+        throw new BadRequestException(
+          `NO SE PUEDE ANULAR LA VENTA FÍSICA. EL PRODUCTO "${product.name}" NO ESTÁ CONTROLADO EN INVENTARIO.`,
+        );
+      }
+
+      const quantityToReturn = Number(detail.quantity || 0);
+
+      if (quantityToReturn <= 0) {
+        throw new BadRequestException(
+          `LA CANTIDAD A DEVOLVER DEL PRODUCTO "${product.name}" NO ES VÁLIDA.`,
+        );
+      }
+    }
+
+    for (const detail of physicalSale.details) {
+      const product = detail.product;
+      const inventory =
+        await this.physicalSalesRepository.findInventoryByProductUuidRepository(
+          product.uuid,
+        );
+
+      if (!inventory) {
+        throw new BadRequestException(
+          `NO SE ENCONTRÓ INVENTARIO PARA "${product.name}".`,
+        );
+      }
+
+      const quantityToReturn = Number(detail.quantity || 0);
+      const previousStock = Number(inventory.currentStock || 0);
+      const newStock = this.roundQuantity(previousStock + quantityToReturn);
+
+      const movement =
+        this.physicalSalesRepository.createInventoryMovementRepository({
+          inventory,
+          movementType: InventoryMovementType.IN,
+          reason: InventoryMovementReason.RETURN,
+          quantity: quantityToReturn,
+          previousStock,
+          newStock,
+          purchasePrice: inventory.lastPurchasePrice ?? null,
+          supplierName: inventory.supplierName ?? null,
+          expirationDate: inventory.expirationDate ?? null,
+          orderUuid: null,
+          notes: `Reversión automática por anulación de venta física ${physicalSale.uuid}. Producto: ${product.name}. Cantidad devuelta: ${quantityToReturn}.`,
+        });
+
+      inventory.currentStock = newStock;
+
+      await this.physicalSalesRepository.saveInventoryRepository(inventory);
+      await this.physicalSalesRepository.saveInventoryMovementRepository(
+        movement,
+      );
+    }
   }
 
   private roundMoney(value: number) {

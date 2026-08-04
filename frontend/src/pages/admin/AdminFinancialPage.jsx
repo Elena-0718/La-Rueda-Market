@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { getFinancialDetail } from '../../api/financialReportService'
+import { AdminExpensesSection } from '../../components/admin/finance/AdminExpensesSection'
+import { AdminPurchasesSection } from '../../components/admin/finance/AdminPurchasesSection'
+import { AdminPhysicalSalesSection } from '../../components/admin/finance/AdminPhysicalSalesSection'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -85,6 +88,7 @@ const EmptyState = ({ message }) => {
 export const AdminFinancialPage = () => {
   const [startDate, setStartDate] = useState(getFirstDayOfMonth())
   const [endDate, setEndDate] = useState(today)
+  const [activeTab, setActiveTab] = useState('REPORT')
   const [report, setReport] = useState(null)
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
@@ -128,7 +132,11 @@ export const AdminFinancialPage = () => {
   }
 
   const handlePrint = () => {
-    window.print()
+    setActiveTab('REPORT')
+
+    setTimeout(() => {
+      window.print()
+    }, 100)
   }
 
   return (
@@ -155,6 +163,56 @@ export const AdminFinancialPage = () => {
             className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold uppercase text-white transition hover:bg-gray-700"
           >
             Imprimir o guardar PDF
+          </button>
+        </div>
+
+        <div className="no-print mb-6 flex flex-wrap gap-3 rounded-2xl bg-white p-4 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setActiveTab('REPORT')}
+            className={`rounded-xl px-4 py-3 text-sm font-bold uppercase ${
+              activeTab === 'REPORT'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-50 text-green-800 hover:bg-green-100'
+            }`}
+          >
+            Informe
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('EXPENSES')}
+            className={`rounded-xl px-4 py-3 text-sm font-bold uppercase ${
+              activeTab === 'EXPENSES'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-50 text-green-800 hover:bg-green-100'
+            }`}
+          >
+            Gastos
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('PURCHASES')}
+            className={`rounded-xl px-4 py-3 text-sm font-bold uppercase ${
+              activeTab === 'PURCHASES'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-50 text-green-800 hover:bg-green-100'
+            }`}
+          >
+            Compras
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('PHYSICAL_SALES')}
+            className={`rounded-xl px-4 py-3 text-sm font-bold uppercase ${
+              activeTab === 'PHYSICAL_SALES'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-50 text-green-800 hover:bg-green-100'
+            }`}
+          >
+            Ventas físicas
           </button>
         </div>
 
@@ -205,309 +263,335 @@ export const AdminFinancialPage = () => {
           </div>
         )}
 
-        <section className="print-section rounded-2xl bg-white p-5 shadow-sm">
-          <div className="mb-6 border-b border-gray-200 pb-5">
-            <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
-              La Rueda Market
-            </p>
+        {activeTab === 'EXPENSES' && (
+          <AdminExpensesSection
+            startDate={startDate}
+            endDate={endDate}
+            onDataChange={loadReport}
+          />
+        )}
 
-            <h2 className="mt-1 text-2xl font-bold text-gray-900">
-              Informe financiero general
-            </h2>
+        {activeTab === 'PURCHASES' && (
+          <AdminPurchasesSection
+            startDate={startDate}
+            endDate={endDate}
+            onDataChange={loadReport}
+          />
+        )}
 
-            <p className="mt-2 text-sm text-gray-500">
-              Periodo consultado: {startDate || 'SIN FECHA'} hasta {endDate || 'SIN FECHA'}
-            </p>
-          </div>
+        {activeTab === 'PHYSICAL_SALES' && (
+          <AdminPhysicalSalesSection
+            startDate={startDate}
+            endDate={endDate}
+            onDataChange={loadReport}
+          />
+        )}
 
-          {isLoading && (
-            <div className="rounded-xl bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
-              Cargando informe financiero...
+        {activeTab === 'REPORT' && (
+          <section className="print-section rounded-2xl bg-white p-5 shadow-sm">
+            <div className="mb-6 border-b border-gray-200 pb-5">
+              <p className="text-sm font-semibold uppercase tracking-wide text-green-700">
+                La Rueda Market
+              </p>
+
+              <h2 className="mt-1 text-2xl font-bold text-gray-900">
+                Informe financiero general
+              </h2>
+
+              <p className="mt-2 text-sm text-gray-500">
+                Periodo consultado: {startDate || 'SIN FECHA'} hasta {endDate || 'SIN FECHA'}
+              </p>
             </div>
-          )}
 
-          {!isLoading && summary && (
-            <>
-              <div className="mb-6 grid gap-4 md:grid-cols-4">
-                <SummaryCard
-                  title="Ingresos pedidos"
-                  value={summary.incomes?.scheduledOrderIncome}
-                  description={`${summary.incomes?.deliveredOrdersCount || 0} pedidos entregados`}
-                />
-
-                <SummaryCard
-                  title="Ventas físicas"
-                  value={summary.incomes?.physicalSalesIncome}
-                  description={`${summary.incomes?.physicalSalesCount || 0} ventas registradas`}
-                />
-
-                <SummaryCard
-                  title="Costos productos"
-                  value={summary.costs?.productCosts}
-                  description={`${summary.costs?.purchasesCount || 0} compras registradas`}
-                />
-
-                <SummaryCard
-                  title="Gastos operativos"
-                  value={summary.expenses?.operatingExpenses}
-                  description={`${summary.expenses?.expensesCount || 0} gastos registrados`}
-                />
+            {isLoading && (
+              <div className="rounded-xl bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
+                Cargando informe financiero...
               </div>
+            )}
 
-              <div className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-5">
-                <div className="grid gap-4 md:grid-cols-4">
-                  <div>
-                    <p className="text-sm font-semibold uppercase text-gray-500">
-                      Ingreso bruto
-                    </p>
-                    <p className="mt-2 text-xl font-bold text-gray-900">
-                      {formatCurrency(summary.incomes?.grossIncome)}
-                    </p>
+            {!isLoading && summary && (
+              <>
+                <div className="mb-6 grid gap-4 md:grid-cols-4">
+                  <SummaryCard
+                    title="Ingresos pedidos"
+                    value={summary.incomes?.scheduledOrderIncome}
+                    description={`${summary.incomes?.deliveredOrdersCount || 0} pedidos entregados`}
+                  />
+
+                  <SummaryCard
+                    title="Ventas físicas"
+                    value={summary.incomes?.physicalSalesIncome}
+                    description={`${summary.incomes?.physicalSalesCount || 0} ventas registradas`}
+                  />
+
+                  <SummaryCard
+                    title="Costos productos"
+                    value={summary.costs?.productCosts}
+                    description={`${summary.costs?.purchasesCount || 0} compras registradas`}
+                  />
+
+                  <SummaryCard
+                    title="Gastos operativos"
+                    value={summary.expenses?.operatingExpenses}
+                    description={`${summary.expenses?.expensesCount || 0} gastos registrados`}
+                  />
+                </div>
+
+                <div className="mb-8 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <div>
+                      <p className="text-sm font-semibold uppercase text-gray-500">
+                        Ingreso bruto
+                      </p>
+                      <p className="mt-2 text-xl font-bold text-gray-900">
+                        {formatCurrency(summary.incomes?.grossIncome)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold uppercase text-gray-500">
+                        Costos
+                      </p>
+                      <p className="mt-2 text-xl font-bold text-gray-900">
+                        {formatCurrency(summary.costs?.productCosts)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold uppercase text-gray-500">
+                        Gastos
+                      </p>
+                      <p className="mt-2 text-xl font-bold text-gray-900">
+                        {formatCurrency(summary.expenses?.operatingExpenses)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold uppercase text-gray-500">
+                        Utilidad neta estimada
+                      </p>
+                      <p className="mt-2 text-xl font-bold text-gray-900">
+                        {formatCurrency(summary.result?.estimatedNetProfit)}
+                      </p>
+
+                      <span
+                        className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase ${profitStatus.className}`}
+                      >
+                        {profitStatus.label}
+                      </span>
+                    </div>
                   </div>
 
-                  <div>
-                    <p className="text-sm font-semibold uppercase text-gray-500">
-                      Costos
-                    </p>
-                    <p className="mt-2 text-xl font-bold text-gray-900">
-                      {formatCurrency(summary.costs?.productCosts)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold uppercase text-gray-500">
-                      Gastos
-                    </p>
-                    <p className="mt-2 text-xl font-bold text-gray-900">
-                      {formatCurrency(summary.expenses?.operatingExpenses)}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold uppercase text-gray-500">
-                      Utilidad neta estimada
-                    </p>
-                    <p className="mt-2 text-xl font-bold text-gray-900">
-                      {formatCurrency(summary.result?.estimatedNetProfit)}
-                    </p>
-
-                    <span
-                      className={`mt-3 inline-flex rounded-full border px-3 py-1 text-xs font-bold uppercase ${profitStatus.className}`}
-                    >
-                      {profitStatus.label}
-                    </span>
+                  <div className="mt-5 rounded-xl bg-white p-4 text-sm text-gray-600">
+                    Margen estimado:{' '}
+                    <strong className="text-gray-900">
+                      {Number(summary.result?.profitMarginPercentage || 0).toFixed(2)}%
+                    </strong>
                   </div>
                 </div>
 
-                <div className="mt-5 rounded-xl bg-white p-4 text-sm text-gray-600">
-                  Margen estimado:{' '}
-                  <strong className="text-gray-900">
-                    {Number(summary.result?.profitMarginPercentage || 0).toFixed(2)}%
-                  </strong>
-                </div>
-              </div>
+                <section className="mb-8">
+                  <h3 className="mb-4 text-lg font-bold text-gray-900">
+                    Pedidos programados entregados
+                  </h3>
 
-              <section className="mb-8">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Pedidos programados entregados
-                </h3>
-
-                {!details?.deliveredOrders?.length ? (
-                  <EmptyState message="No hay pedidos entregados en este periodo." />
-                ) : (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200">
-                    <table className="w-full min-w-[760px] border-collapse text-sm">
-                      <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
-                        <tr>
-                          <th className="px-4 py-3">Fecha</th>
-                          <th className="px-4 py-3">Cliente</th>
-                          <th className="px-4 py-3">Estado</th>
-                          <th className="px-4 py-3">Entrega</th>
-                          <th className="px-4 py-3 text-right">Total</th>
-                        </tr>
-                      </thead>
-
-                      <tbody>
-                        {details.deliveredOrders.map((order) => (
-                          <tr key={order.uuid} className="border-t border-gray-200">
-                            <td className="px-4 py-3">
-                              {formatDate(order.createdAt)}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {order.user?.name || order.user?.fullName || 'CLIENTE'}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {order.status}
-                            </td>
-
-                            <td className="px-4 py-3">
-                              {order.fulfillmentType}
-                            </td>
-
-                            <td className="px-4 py-3 text-right font-semibold">
-                              {formatCurrency(order.total)}
-                            </td>
+                  {!details?.deliveredOrders?.length ? (
+                    <EmptyState message="No hay pedidos entregados en este periodo." />
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
+                      <table className="w-full min-w-[760px] border-collapse text-sm">
+                        <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
+                          <tr>
+                            <th className="px-4 py-3">Fecha</th>
+                            <th className="px-4 py-3">Cliente</th>
+                            <th className="px-4 py-3">Estado</th>
+                            <th className="px-4 py-3">Entrega</th>
+                            <th className="px-4 py-3 text-right">Total</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
+                        </thead>
 
-              <section className="mb-8">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Ventas físicas del local
-                </h3>
+                        <tbody>
+                          {details.deliveredOrders.map((order) => (
+                            <tr key={order.uuid} className="border-t border-gray-200">
+                              <td className="px-4 py-3">
+                                {formatDate(order.createdAt)}
+                              </td>
 
-                {!details?.physicalSales?.length ? (
-                  <EmptyState message="No hay ventas físicas en este periodo." />
-                ) : (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200">
-                    <table className="w-full min-w-[760px] border-collapse text-sm">
-                      <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
-                        <tr>
-                          <th className="px-4 py-3">Fecha</th>
-                          <th className="px-4 py-3">Método de pago</th>
-                          <th className="px-4 py-3">Productos</th>
-                          <th className="px-4 py-3 text-right">Total</th>
-                        </tr>
-                      </thead>
+                              <td className="px-4 py-3">
+                                {order.user?.name || order.user?.fullName || 'CLIENTE'}
+                              </td>
 
-                      <tbody>
-                        {details.physicalSales.map((sale) => (
-                          <tr key={sale.uuid} className="border-t border-gray-200">
-                            <td className="px-4 py-3">
-                              {formatDate(sale.saleDate)}
-                            </td>
+                              <td className="px-4 py-3">
+                                {order.status}
+                              </td>
 
-                            <td className="px-4 py-3">
-                              {sale.paymentMethod}
-                            </td>
+                              <td className="px-4 py-3">
+                                {order.fulfillmentType}
+                              </td>
 
-                            <td className="px-4 py-3">
-                              {sale.details?.length || 0}
-                            </td>
+                              <td className="px-4 py-3 text-right font-semibold">
+                                {formatCurrency(order.total)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
 
-                            <td className="px-4 py-3 text-right font-semibold">
-                              {formatCurrency(sale.total)}
-                            </td>
+                <section className="mb-8">
+                  <h3 className="mb-4 text-lg font-bold text-gray-900">
+                    Ventas físicas del local
+                  </h3>
+
+                  {!details?.physicalSales?.length ? (
+                    <EmptyState message="No hay ventas físicas en este periodo." />
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
+                      <table className="w-full min-w-[760px] border-collapse text-sm">
+                        <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
+                          <tr>
+                            <th className="px-4 py-3">Fecha</th>
+                            <th className="px-4 py-3">Método de pago</th>
+                            <th className="px-4 py-3">Productos</th>
+                            <th className="px-4 py-3 text-right">Total</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
+                        </thead>
 
-              <section className="mb-8">
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Compras y costos de productos
-                </h3>
+                        <tbody>
+                          {details.physicalSales.map((sale) => (
+                            <tr key={sale.uuid} className="border-t border-gray-200">
+                              <td className="px-4 py-3">
+                                {formatDate(sale.saleDate)}
+                              </td>
 
-                {!details?.purchases?.length ? (
-                  <EmptyState message="No hay compras registradas en este periodo." />
-                ) : (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200">
-                    <table className="w-full min-w-[760px] border-collapse text-sm">
-                      <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
-                        <tr>
-                          <th className="px-4 py-3">Fecha</th>
-                          <th className="px-4 py-3">Proveedor</th>
-                          <th className="px-4 py-3">Tipo</th>
-                          <th className="px-4 py-3">Productos</th>
-                          <th className="px-4 py-3 text-right">Total</th>
-                        </tr>
-                      </thead>
+                              <td className="px-4 py-3">
+                                {sale.paymentMethod}
+                              </td>
 
-                      <tbody>
-                        {details.purchases.map((purchase) => (
-                          <tr key={purchase.uuid} className="border-t border-gray-200">
-                            <td className="px-4 py-3">
-                              {formatDate(purchase.purchaseDate)}
-                            </td>
+                              <td className="px-4 py-3">
+                                {sale.details?.length || 0}
+                              </td>
 
-                            <td className="px-4 py-3">
-                              {purchase.supplierName || 'SIN PROVEEDOR'}
-                            </td>
+                              <td className="px-4 py-3 text-right font-semibold">
+                                {formatCurrency(sale.total)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
 
-                            <td className="px-4 py-3">
-                              {purchase.purchaseType}
-                            </td>
+                <section className="mb-8">
+                  <h3 className="mb-4 text-lg font-bold text-gray-900">
+                    Compras y costos de productos
+                  </h3>
 
-                            <td className="px-4 py-3">
-                              {purchase.details?.length || 0}
-                            </td>
-
-                            <td className="px-4 py-3 text-right font-semibold">
-                              {formatCurrency(purchase.total)}
-                            </td>
+                  {!details?.purchases?.length ? (
+                    <EmptyState message="No hay compras registradas en este periodo." />
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
+                      <table className="w-full min-w-[760px] border-collapse text-sm">
+                        <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
+                          <tr>
+                            <th className="px-4 py-3">Fecha</th>
+                            <th className="px-4 py-3">Proveedor</th>
+                            <th className="px-4 py-3">Tipo</th>
+                            <th className="px-4 py-3">Productos</th>
+                            <th className="px-4 py-3 text-right">Total</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
+                        </thead>
 
-              <section>
-                <h3 className="mb-4 text-lg font-bold text-gray-900">
-                  Gastos operativos
-                </h3>
+                        <tbody>
+                          {details.purchases.map((purchase) => (
+                            <tr key={purchase.uuid} className="border-t border-gray-200">
+                              <td className="px-4 py-3">
+                                {formatDate(purchase.purchaseDate)}
+                              </td>
 
-                {!details?.expenses?.length ? (
-                  <EmptyState message="No hay gastos registrados en este periodo." />
-                ) : (
-                  <div className="overflow-x-auto rounded-xl border border-gray-200">
-                    <table className="w-full min-w-[760px] border-collapse text-sm">
-                      <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
-                        <tr>
-                          <th className="px-4 py-3">Fecha</th>
-                          <th className="px-4 py-3">Categoría</th>
-                          <th className="px-4 py-3">Descripción</th>
-                          <th className="px-4 py-3">Pago</th>
-                          <th className="px-4 py-3 text-right">Valor</th>
-                        </tr>
-                      </thead>
+                              <td className="px-4 py-3">
+                                {purchase.supplierName || 'SIN PROVEEDOR'}
+                              </td>
 
-                      <tbody>
-                        {details.expenses.map((expense) => (
-                          <tr key={expense.uuid} className="border-t border-gray-200">
-                            <td className="px-4 py-3">
-                              {formatDate(expense.expenseDate)}
-                            </td>
+                              <td className="px-4 py-3">
+                                {purchase.purchaseType}
+                              </td>
 
-                            <td className="px-4 py-3">
-                              {expense.category}
-                            </td>
+                              <td className="px-4 py-3">
+                                {purchase.details?.length || 0}
+                              </td>
 
-                            <td className="px-4 py-3">
-                              {expense.description}
-                            </td>
+                              <td className="px-4 py-3 text-right font-semibold">
+                                {formatCurrency(purchase.total)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
 
-                            <td className="px-4 py-3">
-                              {expense.paymentMethod}
-                            </td>
+                <section>
+                  <h3 className="mb-4 text-lg font-bold text-gray-900">
+                    Gastos operativos
+                  </h3>
 
-                            <td className="px-4 py-3 text-right font-semibold">
-                              {formatCurrency(expense.amount)}
-                            </td>
+                  {!details?.expenses?.length ? (
+                    <EmptyState message="No hay gastos registrados en este periodo." />
+                  ) : (
+                    <div className="overflow-x-auto rounded-xl border border-gray-200">
+                      <table className="w-full min-w-[760px] border-collapse text-sm">
+                        <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
+                          <tr>
+                            <th className="px-4 py-3">Fecha</th>
+                            <th className="px-4 py-3">Categoría</th>
+                            <th className="px-4 py-3">Descripción</th>
+                            <th className="px-4 py-3">Pago</th>
+                            <th className="px-4 py-3 text-right">Valor</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </section>
-            </>
-          )}
+                        </thead>
 
-          {!isLoading && !summary && !errorMessage && (
-            <EmptyState message="Consulta un periodo para ver el informe financiero." />
-          )}
-        </section>
+                        <tbody>
+                          {details.expenses.map((expense) => (
+                            <tr key={expense.uuid} className="border-t border-gray-200">
+                              <td className="px-4 py-3">
+                                {formatDate(expense.expenseDate)}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {expense.category}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {expense.description}
+                              </td>
+
+                              <td className="px-4 py-3">
+                                {expense.paymentMethod}
+                              </td>
+
+                              <td className="px-4 py-3 text-right font-semibold">
+                                {formatCurrency(expense.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </section>
+              </>
+            )}
+
+            {!isLoading && !summary && !errorMessage && (
+              <EmptyState message="Consulta un periodo para ver el informe financiero." />
+            )}
+          </section>
+        )}
       </section>
     </main>
   )

@@ -6,6 +6,8 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsUUID,
+  MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -20,6 +22,27 @@ export class CreatePhysicalSaleDto {
   })
   @IsDateString({}, { message: 'La fecha de venta debe ser válida.' })
   saleDate: string;
+
+  @ApiPropertyOptional({
+    description:
+      'UUID opcional del usuario registrado asociado a la venta física.',
+    example: 'c31a34b7-8b9a-4e71-a29a-8c26f675a1c8',
+  })
+  @IsOptional()
+  @IsUUID('4', { message: 'El UUID del cliente registrado no es válido.' })
+  customerUserUuid?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'Nombre del cliente local cuando no se asocia un usuario registrado.',
+    example: 'Cliente local',
+  })
+  @IsOptional()
+  @IsString({ message: 'El nombre del cliente debe ser un texto válido.' })
+  @MaxLength(150, {
+    message: 'El nombre del cliente no puede superar los 150 caracteres.',
+  })
+  customerName?: string;
 
   @ApiProperty({
     description: 'Método de pago usado en la venta física.',
