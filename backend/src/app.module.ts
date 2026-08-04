@@ -34,6 +34,7 @@ import { InventoryModule } from './inventory/inventory.module';
 import { InventoryMovementModule } from './inventory-movement/inventory-movement.module';
 import { RecipesModule } from './recipes/recipes.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { PurchasesModule } from './purchases/purchases.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { ExpensesModule } from './expenses/expenses.module';
     InventoryMovementModule,
     RecipesModule,
     ExpensesModule,
+    PurchasesModule,
   ],
 
   controllers: [AppController],
