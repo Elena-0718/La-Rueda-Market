@@ -37,22 +37,29 @@ function AdminDashboardPage() {
       enabled: true,
     },
     {
-  title: 'INVENTARIO',
-  description:
-    'CONTROLA ENTRADAS, SALIDAS, STOCK FÍSICO, VENCIMIENTOS Y ALERTAS.',
-  buttonText: 'GESTIONAR INVENTARIO',
-  path: '/admin/inventario',
-  enabled: true,
-},
-
-{
-  title: 'RECETAS',
-  description:
-    'CREA RECETAS CON VIDEO Y PRODUCTOS RECOMENDADOS PARA IMPULSAR LA VENTA.',
-  buttonText: 'GESTIONAR RECETAS',
-  path: '/admin/recetas',
-  enabled: true,
-},
+      title: 'INVENTARIO',
+      description:
+        'CONTROLA ENTRADAS, SALIDAS, STOCK FÍSICO, VENCIMIENTOS Y ALERTAS.',
+      buttonText: 'GESTIONAR INVENTARIO',
+      path: '/admin/inventario',
+      enabled: true,
+    },
+    {
+      title: 'CONTROL FINANCIERO',
+      description:
+        'CONSULTA INGRESOS, COMPRAS, GASTOS Y UTILIDAD ESTIMADA DEL NEGOCIO.',
+      buttonText: 'VER INFORMES',
+      path: '/admin/finanzas',
+      enabled: true,
+    },
+    {
+      title: 'RECETAS',
+      description:
+        'CREA RECETAS CON VIDEO Y PRODUCTOS RECOMENDADOS PARA IMPULSAR LA VENTA.',
+      buttonText: 'GESTIONAR RECETAS',
+      path: '/admin/recetas',
+      enabled: true,
+    },
   ]
 
   return (
@@ -69,7 +76,8 @@ function AdminDashboardPage() {
 
           <p className="mt-3 max-w-3xl text-stone-700">
             DESDE AQUÍ PUEDES GESTIONAR LA OPERACIÓN DE LA TIENDA:
-            PEDIDOS, PRODUCTOS, CATEGORÍAS, USUARIOS E INVENTARIO.
+            PEDIDOS, PRODUCTOS, CATEGORÍAS, USUARIOS, INVENTARIO,
+            RECETAS E INFORMES FINANCIEROS.
           </p>
         </header>
 

@@ -1,6 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
+
 import MainLayout from '../layouts/MainLayout'
 import AdminLayout from '../layouts/AdminLayout'
+
 import HomePage from '../pages/HomePage'
 import LoginPage from '../pages/LoginPage'
 import RegisterPage from '../pages/RegisterPage'
@@ -11,9 +13,12 @@ import PaymentPage from '../pages/PaymentPage'
 import ProfilePage from '../pages/ProfilePage'
 import MyOrdersPage from '../pages/MyOrdersPage'
 import OrderDetailPage from '../pages/OrderDetailPage'
+
+import RecipesPage from '../pages/RecipesPage'
+import RecipeDetailPage from '../pages/RecipeDetailPage'
+import ProductRecipeBuyPage from '../pages/ProductRecipeBuyPage'
+
 import AdminDashboardPage from '../pages/admin/AdminDashboardPage'
-import ProtectedRoute from './ProtectedRoute'
-import AdminRoute from './AdminRoute'
 import AdminProductsPage from '../pages/admin/AdminProductsPage'
 import AdminCategoriesPage from '../pages/admin/AdminCategoriesPage'
 import AdminUsersPage from '../pages/admin/AdminUsersPage'
@@ -23,16 +28,18 @@ import AdminCreateCategoryPage from '../pages/admin/AdminCreateCategoryPage'
 import AdminEditCategoryPage from '../pages/admin/AdminEditCategoryPage'
 import AdminOrdersPage from '../pages/admin/AdminOrdersPage'
 import AdminInventoryPage from '../pages/admin/AdminInventoryPage'
-import RecipesPage from '../pages/RecipesPage'
-import RecipeDetailPage from '../pages/RecipeDetailPage'
-import ProductRecipeBuyPage from '../pages/ProductRecipeBuyPage'
 import AdminRecipesPage from '../pages/admin/AdminRecipesPage'
+import { AdminFinancialPage } from '../pages/admin/AdminFinancialPage'
+
+import ProtectedRoute from './ProtectedRoute'
+import AdminRoute from './AdminRoute'
 
 function AppRouter() {
   return (
     <Routes>
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
+
         <Route path="/login" element={<LoginPage />} />
         <Route path="/registro" element={<RegisterPage />} />
         <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
@@ -106,9 +113,7 @@ function AppRouter() {
       >
         <Route index element={<AdminDashboardPage />} />
 
-        <Route path="recetas" element={<AdminRecipesPage />} />
-
-       <Route path="pedidos" element={<AdminOrdersPage />} />
+        <Route path="pedidos" element={<AdminOrdersPage />} />
 
         <Route path="productos" element={<AdminProductsPage />} />
         <Route path="productos/nuevo" element={<AdminCreateProductPage />} />
@@ -121,6 +126,10 @@ function AppRouter() {
         <Route path="usuarios" element={<AdminUsersPage />} />
 
         <Route path="inventario" element={<AdminInventoryPage />} />
+
+        <Route path="finanzas" element={<AdminFinancialPage />} />
+
+        <Route path="recetas" element={<AdminRecipesPage />} />
       </Route>
     </Routes>
   )
