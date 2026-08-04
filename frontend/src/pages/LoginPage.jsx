@@ -6,10 +6,11 @@ import { saveAuthSession } from '../features/auth/authStorage'
 function LoginPage() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-const fromBuy = searchParams.get('from') === 'buy'
+  const fromBuy = searchParams.get('from') === 'buy'
 
   const [phone, setPhone] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
@@ -47,10 +48,10 @@ const fromBuy = searchParams.get('from') === 'buy'
         </h1>
 
         <p className="mt-3 text-stone-700">
-  {fromBuy
-    ? 'INICIA SESIÓN PARA CONTINUAR CON TU COMPRA.'
-    : 'ENTRA CON TU NÚMERO DE CELULAR Y CONTRASEÑA.'}
-</p>
+          {fromBuy
+            ? 'INICIA SESIÓN PARA CONTINUAR CON TU COMPRA.'
+            : 'ENTRA CON TU NÚMERO DE CELULAR Y CONTRASEÑA.'}
+        </p>
 
         {errorMessage && (
           <p className="mt-5 rounded-2xl bg-red-100 p-4 font-semibold text-red-700">
@@ -86,15 +87,34 @@ const fromBuy = searchParams.get('from') === 'buy'
               CONTRASEÑA
             </label>
 
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="ESCRIBE TU CONTRASEÑA"
-              className="w-full rounded-2xl border border-green-200 px-4 py-4 text-lg outline-none focus:border-green-700"
-              required
-            />
+            <div className="flex overflow-hidden rounded-2xl border border-green-200 focus-within:border-green-700">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="ESCRIBE TU CONTRASEÑA"
+                className="w-full px-4 py-4 text-lg outline-none"
+                required
+              />
+
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="min-w-[92px] border-l border-green-200 bg-green-50 px-4 text-sm font-bold text-green-800 transition hover:bg-green-100"
+                aria-label={
+                  showPassword
+                    ? 'OCULTAR CONTRASEÑA'
+                    : 'VER CONTRASEÑA'
+                }
+              >
+                {showPassword ? 'OCULTAR' : 'VER'}
+              </button>
+            </div>
+
+            <p className="mt-2 text-sm text-stone-500">
+              PUEDES USAR “VER” PARA REVISAR QUE LA CONTRASEÑA ESTÉ BIEN ESCRITA.
+            </p>
           </div>
 
           <button
