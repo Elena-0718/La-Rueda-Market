@@ -36,14 +36,52 @@ const getProductImage = (product) => {
   return `${import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000'}${image}`
 }
 
-function ProductCard({ product }) {
+function ProductCard({
+  product,
+  isFavorite = false,
+  onToggleFavorite,
+}) {
   const navigate = useNavigate()
 
   const [isAdding, setIsAdding] = useState(false)
+  const [isUpdatingFavorite, setIsUpdatingFavorite] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
 
   const productImage = getProductImage(product)
+
+  const handleFavoriteClick = async () => {
+    setSuccessMessage('')
+    setErrorMessage('')
+
+    if (!isAuthenticated()) {
+      navigate('/login')
+      return
+    }
+
+    if (!onToggleFavorite) {
+      return
+    }
+
+    try {
+      setIsUpdatingFavorite(true)
+      await onToggleFavorite(product.uuid)
+    } catch (error) {
+      const backendMessage =
+        error.response?.data?.message ||
+        'NO SE PUDO ACTUALIZAR EL FAVORITO.'
+
+      setErrorMessage(
+        Array.isArray(backendMessage)
+          ? backendMessage.join(' ')
+          : backendMessage,
+      )
+
+      console.error(error)
+    } finally {
+      setIsUpdatingFavorite(false)
+    }
+  }
 
   const handleBuyClick = async () => {
     setSuccessMessage('')
@@ -93,7 +131,28 @@ function ProductCard({ product }) {
   }
 
   return (
-    <article className="overflow-hidden rounded-3xl bg-white shadow">
+    <article className="relative overflow-hidden rounded-3xl bg-white shadow">
+      <button
+        type="button"
+        onClick={handleFavoriteClick}
+        disabled={isUpdatingFavorite}
+        className={`absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-white text-2xl shadow transition hover:scale-105 disabled:cursor-not-allowed disabled:opacity-60 ${
+          isFavorite ? 'text-red-600' : 'text-stone-500'
+        }`}
+        aria-label={
+          isFavorite
+            ? 'QUITAR DE FAVORITOS'
+            : 'AGREGAR A FAVORITOS'
+        }
+        title={
+          isFavorite
+            ? 'QUITAR DE FAVORITOS'
+            : 'AGREGAR A FAVORITOS'
+        }
+      >
+        {isFavorite ? '♥' : '♡'}
+      </button>
+
       {productImage ? (
         <img
           src={productImage}
@@ -111,6 +170,12 @@ function ProductCard({ product }) {
           <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-800">
             {product.category?.name}
           </span>
+
+          {isFavorite && (
+            <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
+              FAVORITO
+            </span>
+          )}
         </div>
 
         <h3 className="mt-3 text-xl font-bold text-green-900">

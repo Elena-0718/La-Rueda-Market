@@ -1,6 +1,10 @@
 import ProductCard from '../../components/ProductCard'
 
-function ProductList({ products }) {
+function ProductList({
+  products,
+  favoriteProductUuids = [],
+  onToggleFavorite,
+}) {
   if (products.length === 0) {
     return (
       <div className="mt-6 rounded-3xl bg-white p-8 text-center shadow">
@@ -18,7 +22,12 @@ function ProductList({ products }) {
   return (
     <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {products.map((product) => (
-        <ProductCard key={product.uuid} product={product} />
+        <ProductCard
+          key={product.uuid}
+          product={product}
+          isFavorite={favoriteProductUuids.includes(product.uuid)}
+          onToggleFavorite={onToggleFavorite}
+        />
       ))}
     </div>
   )

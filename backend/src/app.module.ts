@@ -37,6 +37,7 @@ import { ExpensesModule } from './expenses/expenses.module';
 import { PurchasesModule } from './purchases/purchases.module';
 import { PhysicalSalesModule } from './physical-sales/physical-sales.module';
 import { FinancialReportModule } from './financial-report/financial-report.module';
+import { FavoriteProductsModule } from './favorite-products/favorite-products.module';
 
 @Module({
   imports: [
@@ -100,6 +101,7 @@ import { FinancialReportModule } from './financial-report/financial-report.modul
     PurchasesModule,
     PhysicalSalesModule,
     FinancialReportModule,
+    FavoriteProductsModule,
   ],
 
   controllers: [AppController],
