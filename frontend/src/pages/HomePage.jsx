@@ -21,27 +21,22 @@ function HomePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState('')
 
+  const authUser = getAuthUser()
+  const firstName = authUser?.name?.split(' ')[0] || authUser?.fullName?.split(' ')[0]
+
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const requests = [
+        setIsLoading(true)
+        setErrorMessage('')
+
+        const [productsData, categoriesData] = await Promise.all([
           getProducts(),
           getCategories(),
-        ]
+        ])
 
-        if (isAuthenticated()) {
-          requests.push(getMyFavoriteProductUuids())
-        }
-
-        const [productsData, categoriesData, favoriteUuidsData] =
-          await Promise.all(requests)
-
-        setProducts(productsData)
-        setCategories(categoriesData)
-
-        if (Array.isArray(favoriteUuidsData)) {
-          setFavoriteProductUuids(favoriteUuidsData)
-        }
+        setProducts(Array.isArray(productsData) ? productsData : productsData?.data || [])
+        setCategories(Array.isArray(categoriesData) ? categoriesData : categoriesData?.data || [])
       } catch (error) {
         setErrorMessage('NO SE PUDIERON CARGAR LOS PRODUCTOS.')
         console.error(error)
@@ -51,6 +46,31 @@ function HomePage() {
     }
 
     loadInitialData()
+  }, [])
+
+  useEffect(() => {
+    const loadFavorites = async () => {
+      if (!isAuthenticated()) {
+        setFavoriteProductUuids([])
+        return
+      }
+
+      try {
+        const favoriteUuidsData = await getMyFavoriteProductUuids()
+
+        setFavoriteProductUuids(
+          Array.isArray(favoriteUuidsData) ? favoriteUuidsData : [],
+        )
+      } catch (error) {
+        setFavoriteProductUuids([])
+
+        if (error?.response?.status !== 403) {
+          console.error(error)
+        }
+      }
+    }
+
+    loadFavorites()
   }, [])
 
   const filteredProducts = useMemo(() => {
@@ -94,9 +114,6 @@ function HomePage() {
       return currentFavorites.filter((uuid) => uuid !== productUuid)
     })
   }
-
-  const authUser = getAuthUser()
-  const firstName = authUser?.name?.split(' ')[0]
 
   return (
     <main className="p-6">

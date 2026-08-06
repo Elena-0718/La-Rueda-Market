@@ -52,8 +52,8 @@ export class User {
   credential: Credential;
 
   @OneToMany(() => Cart, (cart) => cart.user)
-carts: Cart[];
-@OneToMany(() => Order, (order) => order.user)
-orders: Order[];
+  carts: Cart[];
 
+  @OneToMany(() => Order, (order) => order.user)
+  orders: Order[];
 }

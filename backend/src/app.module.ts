@@ -102,6 +102,7 @@ import { FavoriteProductsModule } from './favorite-products/favorite-products.mo
     PhysicalSalesModule,
     FinancialReportModule,
     FavoriteProductsModule,
+
   ],
 
   controllers: [AppController],
