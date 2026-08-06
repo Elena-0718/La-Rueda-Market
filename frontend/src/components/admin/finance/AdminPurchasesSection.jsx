@@ -385,7 +385,6 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
     return {
       purchaseDate: formData.purchaseDate,
       supplierName: formData.supplierName.trim() || null,
-      relatedOrderUuid: formData.relatedOrderUuid.trim() || null,
       notes: formData.notes.trim() || null,
     }
   }
@@ -520,7 +519,9 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
         </h2>
 
         <p className="mt-2 text-sm text-gray-500">
-          Registra una compra con uno o varios productos del mismo proveedor. Si la compra quedó mal en productos o cantidades, anúlala y regístrala de nuevo.
+          Registra una compra con uno o varios productos del mismo proveedor. Si
+          la compra quedó mal en productos, cantidades, costos o tipo de compra,
+          anúlala y regístrala de nuevo.
         </p>
       </div>
 
@@ -538,7 +539,10 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
 
       {isEditing && (
         <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm font-semibold text-yellow-800">
-          Estás editando datos generales de una compra. Los productos, cantidades y costos no se editan aquí para proteger el inventario.
+          Estás editando datos generales de una compra. Solo puedes cambiar
+          fecha, proveedor y notas/soporte. Los productos, cantidades, costos,
+          tipo de compra y pedido relacionado no se editan aquí para proteger el
+          inventario y la trazabilidad.
         </div>
       )}
 
@@ -585,7 +589,8 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
 
             {isEditing && (
               <p className="mt-1 text-xs text-gray-500">
-                Si registraste mal el tipo de compra, anula este registro y crea uno nuevo.
+                Si registraste mal el tipo de compra, anula este registro y crea
+                uno nuevo.
               </p>
             )}
           </div>
@@ -615,9 +620,17 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
               name="relatedOrderUuid"
               value={formData.relatedOrderUuid}
               onChange={handleChange}
+              disabled={isEditing}
               placeholder="UUID del pedido si aplica"
-              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
+              className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600 disabled:bg-gray-100 disabled:text-gray-500"
             />
+
+            {isEditing && (
+              <p className="mt-1 text-xs text-gray-500">
+                Si el pedido relacionado quedó mal, anula esta compra y regístrala
+                de nuevo.
+              </p>
+            )}
           </div>
         </div>
 
@@ -794,10 +807,16 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                       <tr>
                         <th className="px-4 py-3">Producto</th>
                         <th className="px-4 py-3 text-right">Cantidad</th>
-                        <th className="px-4 py-3 text-right">Costo unitario</th>
+                        <th className="px-4 py-3 text-right">
+                          Costo unitario
+                        </th>
                         <th className="px-4 py-3 text-right">% Ganancia</th>
-                        <th className="px-4 py-3 text-right">Precio sugerido</th>
-                        <th className="px-4 py-3 text-right">Precio manual</th>
+                        <th className="px-4 py-3 text-right">
+                          Precio sugerido
+                        </th>
+                        <th className="px-4 py-3 text-right">
+                          Precio manual
+                        </th>
                         <th className="px-4 py-3 text-right">Precio final</th>
                         <th className="px-4 py-3 text-right">Total línea</th>
                         <th className="px-4 py-3 text-right">Acciones</th>
@@ -860,7 +879,9 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
 
                               <button
                                 type="button"
-                                onClick={() => handleRemoveItem(item.productUuid)}
+                                onClick={() =>
+                                  handleRemoveItem(item.productUuid)
+                                }
                                 className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold uppercase text-red-700 hover:bg-red-50"
                               >
                                 Quitar
@@ -896,7 +917,7 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
 
         <div className="mb-5">
           <label className="mb-2 block text-sm font-semibold text-gray-700">
-            Notas
+            Notas / soporte
           </label>
 
           <textarea
@@ -904,7 +925,7 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
             value={formData.notes}
             onChange={handleChange}
             rows="3"
-            placeholder="Observaciones internas opcionales"
+            placeholder="Ejemplo: Soporte pendiente o enlace de Drive"
             className="w-full resize-none rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
           />
         </div>
@@ -1013,10 +1034,10 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
 
               <div className="mb-4 rounded-xl bg-gray-50 p-4 text-sm text-gray-700">
                 <p className="font-semibold text-gray-900">
-                  Notas
+                  Notas / soporte
                 </p>
 
-                <p className="mt-1">
+                <p className="mt-1 whitespace-pre-wrap">
                   {purchase.notes || 'Sin notas registradas.'}
                 </p>
               </div>
@@ -1032,10 +1053,16 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                       <tr>
                         <th className="px-4 py-3">Producto</th>
                         <th className="px-4 py-3 text-right">Cantidad</th>
-                        <th className="px-4 py-3 text-right">Costo unitario</th>
+                        <th className="px-4 py-3 text-right">
+                          Costo unitario
+                        </th>
                         <th className="px-4 py-3 text-right">% Ganancia</th>
-                        <th className="px-4 py-3 text-right">Precio sugerido</th>
-                        <th className="px-4 py-3 text-right">Precio manual</th>
+                        <th className="px-4 py-3 text-right">
+                          Precio sugerido
+                        </th>
+                        <th className="px-4 py-3 text-right">
+                          Precio manual
+                        </th>
                         <th className="px-4 py-3 text-right">Precio final</th>
                         <th className="px-4 py-3 text-right">Total línea</th>
                       </tr>
@@ -1091,7 +1118,7 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                   disabled={isSaving}
                   className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-bold uppercase text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100"
                 >
-                  Editar
+                  Editar datos generales
                 </button>
 
                 <button

@@ -1,59 +1,38 @@
+import { IsDateString, IsOptional, IsString, IsUUID, MaxLength } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import {
-  IsBoolean,
-  IsDateString,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
-
-import { PurchaseType } from '../../entities/purchase.entity';
 
 export class UpdatePurchaseDto {
   @ApiPropertyOptional({
-    description: 'Fecha en la que se realizó la compra.',
-    example: '2026-08-03',
+    example: '2026-08-06',
+    description: 'Fecha de la compra. Campo editable porque no afecta inventario.',
   })
   @IsOptional()
-  @IsDateString({}, { message: 'La fecha de compra debe ser válida.' })
+  @IsDateString()
   purchaseDate?: string;
 
   @ApiPropertyOptional({
-    description: 'Nombre del proveedor o lugar de compra.',
-    example: 'Proveedor campesino local',
+    example: 'Proveedor local',
+    description: 'Nombre del proveedor. Campo editable porque no afecta inventario.',
   })
   @IsOptional()
-  @IsString({ message: 'El proveedor debe ser un texto válido.' })
-  @MaxLength(150, {
-    message: 'El proveedor no puede superar los 150 caracteres.',
-  })
+  @IsString()
+  @MaxLength(150)
   supplierName?: string;
 
   @ApiPropertyOptional({
-    description: 'Tipo de compra.',
-    enum: PurchaseType,
-    example: PurchaseType.INVENTORY,
+    example: 'b8e1a9b2-1111-4444-9999-6a4a2f000000',
+    description:
+      'UUID del pedido relacionado, si la compra corresponde a un pedido programado. Campo editable de trazabilidad.',
   })
   @IsOptional()
-  @IsEnum(PurchaseType, {
-    message: 'El tipo de compra no es válido.',
-  })
-  purchaseType?: PurchaseType;
+  @IsUUID()
+  relatedOrderUuid?: string;
 
   @ApiPropertyOptional({
-    description: 'Notas internas sobre la compra.',
-    example: 'Compra corregida por ajuste de proveedor.',
+    example: 'Soporte: https://drive.google.com/...',
+    description: 'Notas, observaciones o enlace del soporte de la compra.',
   })
   @IsOptional()
-  @IsString({ message: 'Las notas deben ser un texto válido.' })
+  @IsString()
   notes?: string;
-
-  @ApiPropertyOptional({
-    description: 'Estado de la compra.',
-    example: true,
-  })
-  @IsOptional()
-  @IsBoolean({ message: 'isActive debe ser verdadero o falso.' })
-  isActive?: boolean;
 }
