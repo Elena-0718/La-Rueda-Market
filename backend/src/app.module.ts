@@ -38,6 +38,8 @@ import { PurchasesModule } from './purchases/purchases.module';
 import { PhysicalSalesModule } from './physical-sales/physical-sales.module';
 import { FinancialReportModule } from './financial-report/financial-report.module';
 import { FavoriteProductsModule } from './favorite-products/favorite-products.module';
+import { CashClosingsModule } from './cash-closings/cash-closings.module';
+import { CashDepositsModule } from './cash-deposits/cash-deposits.module';
 
 @Module({
   imports: [
@@ -102,6 +104,8 @@ import { FavoriteProductsModule } from './favorite-products/favorite-products.mo
     PhysicalSalesModule,
     FinancialReportModule,
     FavoriteProductsModule,
+    CashClosingsModule,
+    CashDepositsModule,
 
   ],
 

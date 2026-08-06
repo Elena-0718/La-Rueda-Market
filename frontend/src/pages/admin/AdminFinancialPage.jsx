@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { getFinancialDetail } from '../../api/financialReportService'
 import { AdminExpensesSection } from '../../components/admin/finance/AdminExpensesSection'
 import { AdminPurchasesSection } from '../../components/admin/finance/AdminPurchasesSection'
 import { AdminPhysicalSalesSection } from '../../components/admin/finance/AdminPhysicalSalesSection'
+import { AdminCashSection } from '../../components/admin/finance/AdminCashSection'
+import { AdminAccountantReportSection } from '../../components/admin/finance/AdminAccountantReportSection'
 
 const today = new Date().toISOString().split('T')[0]
 
@@ -57,6 +60,17 @@ const getProfitStatus = (value) => {
   }
 }
 
+const getCustomerName = (record) => {
+  return (
+    record?.customerUser?.name ||
+    record?.customerUser?.fullName ||
+    record?.user?.name ||
+    record?.user?.fullName ||
+    record?.customerName ||
+    'CLIENTE'
+  )
+}
+
 const SummaryCard = ({ title, value, description }) => {
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
@@ -86,6 +100,7 @@ const EmptyState = ({ message }) => {
 }
 
 export const AdminFinancialPage = () => {
+  const navigate = useNavigate()
   const [startDate, setStartDate] = useState(getFirstDayOfMonth())
   const [endDate, setEndDate] = useState(today)
   const [activeTab, setActiveTab] = useState('REPORT')
@@ -132,11 +147,11 @@ export const AdminFinancialPage = () => {
   }
 
   const handlePrint = () => {
-    setActiveTab('REPORT')
+    setActiveTab('ACCOUNTANT')
 
     setTimeout(() => {
       window.print()
-    }, 100)
+    }, 150)
   }
 
   return (
@@ -153,17 +168,28 @@ export const AdminFinancialPage = () => {
             </h1>
 
             <p className="mt-2 text-sm text-gray-500">
-              Consulta ingresos, compras, gastos y utilidad estimada de La Rueda Market.
+              Consulta ingresos, compras, gastos, caja, consignaciones y utilidad
+              estimada de La Rueda Market.
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={handlePrint}
-            className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold uppercase text-white transition hover:bg-gray-700"
-          >
-            Imprimir o guardar PDF
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => navigate('/admin')}
+              className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-bold uppercase text-gray-700 transition hover:bg-gray-100"
+            >
+              Volver al panel
+            </button>
+
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="rounded-xl bg-gray-900 px-5 py-3 text-sm font-bold uppercase text-white transition hover:bg-gray-700"
+            >
+              Imprimir o guardar PDF
+            </button>
+          </div>
         </div>
 
         <div className="no-print mb-6 flex flex-wrap gap-3 rounded-2xl bg-white p-4 shadow-sm">
@@ -213,6 +239,30 @@ export const AdminFinancialPage = () => {
             }`}
           >
             Ventas físicas
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('CASH')}
+            className={`rounded-xl px-4 py-3 text-sm font-bold uppercase ${
+              activeTab === 'CASH'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-50 text-green-800 hover:bg-green-100'
+            }`}
+          >
+            Caja
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('ACCOUNTANT')}
+            className={`rounded-xl px-4 py-3 text-sm font-bold uppercase ${
+              activeTab === 'ACCOUNTANT'
+                ? 'bg-green-700 text-white'
+                : 'bg-green-50 text-green-800 hover:bg-green-100'
+            }`}
+          >
+            Contador
           </button>
         </div>
 
@@ -287,6 +337,23 @@ export const AdminFinancialPage = () => {
           />
         )}
 
+        {activeTab === 'CASH' && (
+          <AdminCashSection
+            startDate={startDate}
+            endDate={endDate}
+            onDataChange={loadReport}
+          />
+        )}
+
+        {activeTab === 'ACCOUNTANT' && (
+          <AdminAccountantReportSection
+            startDate={startDate}
+            endDate={endDate}
+            report={report}
+            isLoading={isLoading}
+          />
+        )}
+
         {activeTab === 'REPORT' && (
           <section className="print-section rounded-2xl bg-white p-5 shadow-sm">
             <div className="mb-6 border-b border-gray-200 pb-5">
@@ -299,7 +366,8 @@ export const AdminFinancialPage = () => {
               </h2>
 
               <p className="mt-2 text-sm text-gray-500">
-                Periodo consultado: {startDate || 'SIN FECHA'} hasta {endDate || 'SIN FECHA'}
+                Periodo consultado: {startDate || 'SIN FECHA'} hasta{' '}
+                {endDate || 'SIN FECHA'}
               </p>
             </div>
 
@@ -315,25 +383,33 @@ export const AdminFinancialPage = () => {
                   <SummaryCard
                     title="Ingresos pedidos"
                     value={summary.incomes?.scheduledOrderIncome}
-                    description={`${summary.incomes?.deliveredOrdersCount || 0} pedidos entregados`}
+                    description={`${
+                      summary.incomes?.deliveredOrdersCount || 0
+                    } pedidos entregados`}
                   />
 
                   <SummaryCard
                     title="Ventas físicas"
                     value={summary.incomes?.physicalSalesIncome}
-                    description={`${summary.incomes?.physicalSalesCount || 0} ventas registradas`}
+                    description={`${
+                      summary.incomes?.physicalSalesCount || 0
+                    } ventas registradas`}
                   />
 
                   <SummaryCard
                     title="Costos productos"
                     value={summary.costs?.productCosts}
-                    description={`${summary.costs?.purchasesCount || 0} compras registradas`}
+                    description={`${
+                      summary.costs?.purchasesCount || 0
+                    } compras registradas`}
                   />
 
                   <SummaryCard
                     title="Gastos operativos"
                     value={summary.expenses?.operatingExpenses}
-                    description={`${summary.expenses?.expensesCount || 0} gastos registrados`}
+                    description={`${
+                      summary.expenses?.expensesCount || 0
+                    } gastos registrados`}
                   />
                 </div>
 
@@ -385,7 +461,10 @@ export const AdminFinancialPage = () => {
                   <div className="mt-5 rounded-xl bg-white p-4 text-sm text-gray-600">
                     Margen estimado:{' '}
                     <strong className="text-gray-900">
-                      {Number(summary.result?.profitMarginPercentage || 0).toFixed(2)}%
+                      {Number(
+                        summary.result?.profitMarginPercentage || 0,
+                      ).toFixed(2)}
+                      %
                     </strong>
                   </div>
                 </div>
@@ -412,13 +491,16 @@ export const AdminFinancialPage = () => {
 
                         <tbody>
                           {details.deliveredOrders.map((order) => (
-                            <tr key={order.uuid} className="border-t border-gray-200">
+                            <tr
+                              key={order.uuid}
+                              className="border-t border-gray-200"
+                            >
                               <td className="px-4 py-3">
                                 {formatDate(order.createdAt)}
                               </td>
 
                               <td className="px-4 py-3">
-                                {order.user?.name || order.user?.fullName || 'CLIENTE'}
+                                {getCustomerName(order)}
                               </td>
 
                               <td className="px-4 py-3">
@@ -461,7 +543,10 @@ export const AdminFinancialPage = () => {
 
                         <tbody>
                           {details.physicalSales.map((sale) => (
-                            <tr key={sale.uuid} className="border-t border-gray-200">
+                            <tr
+                              key={sale.uuid}
+                              className="border-t border-gray-200"
+                            >
                               <td className="px-4 py-3">
                                 {formatDate(sale.saleDate)}
                               </td>
@@ -507,7 +592,10 @@ export const AdminFinancialPage = () => {
 
                         <tbody>
                           {details.purchases.map((purchase) => (
-                            <tr key={purchase.uuid} className="border-t border-gray-200">
+                            <tr
+                              key={purchase.uuid}
+                              className="border-t border-gray-200"
+                            >
                               <td className="px-4 py-3">
                                 {formatDate(purchase.purchaseDate)}
                               </td>
@@ -557,7 +645,10 @@ export const AdminFinancialPage = () => {
 
                         <tbody>
                           {details.expenses.map((expense) => (
-                            <tr key={expense.uuid} className="border-t border-gray-200">
+                            <tr
+                              key={expense.uuid}
+                              className="border-t border-gray-200"
+                            >
                               <td className="px-4 py-3">
                                 {formatDate(expense.expenseDate)}
                               </td>
