@@ -23,7 +23,7 @@ const initialItemForm = {
   unitCost: '',
   profitPercentage: '30',
   manualSalePrice: '',
-  updateProductPrice: false,
+  updateProductPrice: true,
 }
 
 const formatCurrency = (value) => {
@@ -337,7 +337,10 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
         item.manualSalePrice !== null && item.manualSalePrice !== undefined
           ? String(item.manualSalePrice)
           : '',
-      updateProductPrice: Boolean(item.updateProductPrice),
+      updateProductPrice:
+        item.updateProductPrice !== undefined
+          ? Boolean(item.updateProductPrice)
+          : true,
     })
   }
 
@@ -519,9 +522,17 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
         </h2>
 
         <p className="mt-2 text-sm text-gray-500">
-          Registra una compra con uno o varios productos del mismo proveedor. Si
-          la compra quedó mal en productos, cantidades, costos o tipo de compra,
-          anúlala y regístrala de nuevo.
+          Registra una compra con uno o varios productos del mismo proveedor. El
+          precio final calculado o manual queda marcado por defecto para
+          actualizar el catálogo. Si no quieres cambiar el precio público de un
+          producto puntual, desmarca esa opción antes de agregarlo al comprobante.
+        </p>
+
+        <p className="mt-2 text-sm text-gray-500">
+          Si la compra es para inventario físico y el producto aún no tiene
+          inventario creado, el sistema lo creará automáticamente. Si la compra
+          quedó mal en productos, cantidades, costos o tipo de compra, anúlala y
+          regístrala de nuevo.
         </p>
       </div>
 
@@ -734,15 +745,22 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                 </div>
 
                 <div className="flex items-end">
-                  <label className="flex w-full items-center gap-3 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-semibold text-gray-700">
+                  <label className="flex w-full items-start gap-3 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-semibold text-green-800">
                     <input
                       type="checkbox"
                       name="updateProductPrice"
                       checked={itemForm.updateProductPrice}
                       onChange={handleItemChange}
+                      className="mt-1"
                     />
 
-                    Actualizar precio de venta del producto
+                    <span>
+                      Actualizar este precio en el catálogo
+                      <span className="mt-1 block text-xs font-medium text-green-700">
+                        Se usará el precio final calculado o el precio manual
+                        indicado para actualizar el producto.
+                      </span>
+                    </span>
                   </label>
                 </div>
               </div>
@@ -802,7 +820,7 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
-                  <table className="w-full min-w-[1040px] border-collapse text-sm">
+                  <table className="w-full min-w-[1120px] border-collapse text-sm">
                     <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
                       <tr>
                         <th className="px-4 py-3">Producto</th>
@@ -818,6 +836,9 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                           Precio manual
                         </th>
                         <th className="px-4 py-3 text-right">Precio final</th>
+                        <th className="px-4 py-3 text-center">
+                          Actualiza catálogo
+                        </th>
                         <th className="px-4 py-3 text-right">Total línea</th>
                         <th className="px-4 py-3 text-right">Acciones</th>
                       </tr>
@@ -863,6 +884,10 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                             {formatCurrency(item.finalSalePrice)}
                           </td>
 
+                          <td className="px-4 py-3 text-center">
+                            {item.updateProductPrice ? 'Sí' : 'No'}
+                          </td>
+
                           <td className="px-4 py-3 text-right font-semibold">
                             {formatCurrency(item.lineTotal)}
                           </td>
@@ -895,7 +920,7 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                     <tfoot>
                       <tr className="border-t border-gray-300 bg-gray-50">
                         <td
-                          colSpan="7"
+                          colSpan="8"
                           className="px-4 py-4 text-right text-base font-black text-gray-900"
                         >
                           Total de la compra
@@ -1048,7 +1073,7 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                 </div>
               ) : (
                 <div className="overflow-x-auto rounded-xl border border-gray-200">
-                  <table className="w-full min-w-[980px] border-collapse text-sm">
+                  <table className="w-full min-w-[1080px] border-collapse text-sm">
                     <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
                       <tr>
                         <th className="px-4 py-3">Producto</th>
@@ -1064,6 +1089,9 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
                           Precio manual
                         </th>
                         <th className="px-4 py-3 text-right">Precio final</th>
+                        <th className="px-4 py-3 text-center">
+                          Actualizó catálogo
+                        </th>
                         <th className="px-4 py-3 text-right">Total línea</th>
                       </tr>
                     </thead>
@@ -1099,6 +1127,10 @@ export const AdminPurchasesSection = ({ startDate, endDate, onDataChange }) => {
 
                           <td className="px-4 py-3 text-right">
                             {formatCurrency(detail.finalSalePrice)}
+                          </td>
+
+                          <td className="px-4 py-3 text-center">
+                            {detail.updateProductPrice ? 'Sí' : 'No'}
                           </td>
 
                           <td className="px-4 py-3 text-right font-semibold">

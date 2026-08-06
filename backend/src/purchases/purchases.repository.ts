@@ -60,6 +60,8 @@ export class PurchasesRepository {
     });
   }
 
+
+
   findAllActiveByDateRangeRepository(
     startDate: string,
     endDate: string,
@@ -152,6 +154,10 @@ export class PurchasesRepository {
   ): PurchaseDetail {
     return this.purchaseDetailsDB.create(data);
   }
+
+createInventoryRepository(data: Partial<Inventory>): Inventory {
+  return this.inventoriesDB.create(data);
+}
 
   createInventoryMovementRepository(
     data: Partial<InventoryMovement>,

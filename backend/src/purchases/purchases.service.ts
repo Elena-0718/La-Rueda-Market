@@ -225,16 +225,8 @@ export class PurchasesService {
       dataToUpdate.supplierName = dto.supplierName?.trim() || null;
     }
 
-    if (dto.purchaseType !== undefined) {
-      dataToUpdate.purchaseType = dto.purchaseType;
-    }
-
     if (dto.notes !== undefined) {
       dataToUpdate.notes = dto.notes?.trim() || null;
-    }
-
-    if (dto.isActive !== undefined) {
-      dataToUpdate.isActive = dto.isActive;
     }
 
     try {
@@ -309,20 +301,30 @@ export class PurchasesService {
     purchaseDate: string;
     notes?: string;
   }) {
-    const inventory =
+    let inventory =
       await this.purchasesRepository.findInventoryByProductUuidRepository(
         data.product.uuid,
       );
 
     if (!inventory) {
-      throw new BadRequestException(
-        `EL PRODUCTO "${data.product.name}" NO TIENE INVENTARIO CREADO. PRIMERO CREA EL REGISTRO EN INVENTARIO O USA TIPO DE COMPRA PEDIDO PROGRAMADO.`,
-      );
+      inventory =
+        this.purchasesRepository.createInventoryRepository({
+          product: data.product,
+          currentStock: 0,
+          minimumStock: 0,
+          lastPurchasePrice: null,
+          supplierName: data.supplierName?.trim() || null,
+          isTracked: true,
+          notes: `Inventario creado automáticamente desde una compra para ${data.product.name}.`,
+        });
+
+      inventory =
+        await this.purchasesRepository.saveInventoryRepository(inventory);
     }
 
     if (!inventory.isTracked) {
       throw new BadRequestException(
-        `EL PRODUCTO "${data.product.name}" NO ESTÁ MARCADO PARA CONTROL DE INVENTARIO.`,
+        `EL PRODUCTO "${data.product.name}" TIENE INVENTARIO CREADO, PERO NO ESTÁ MARCADO PARA CONTROL DE INVENTARIO. ACTIVA EL CONTROL DE INVENTARIO O USA TIPO DE COMPRA PEDIDO PROGRAMADO.`,
       );
     }
 
