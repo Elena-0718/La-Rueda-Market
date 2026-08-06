@@ -59,6 +59,11 @@ export class CashClosingsService {
       0,
     );
 
+    const totalCashOrderPayments = closings.reduce(
+      (total, closing) => total + Number(closing.cashOrderPayments || 0),
+      0,
+    );
+
     const totalCashExpenses = closings.reduce(
       (total, closing) => total + Number(closing.cashExpenses || 0),
       0,
@@ -83,6 +88,7 @@ export class CashClosingsService {
       totalRecords: closings.length,
       totalInitialCash: this.roundMoney(totalInitialCash),
       totalCashSales: this.roundMoney(totalCashSales),
+      totalCashOrderPayments: this.roundMoney(totalCashOrderPayments),
       totalCashExpenses: this.roundMoney(totalCashExpenses),
       totalCashDeposits: this.roundMoney(totalCashDeposits),
       totalCashWithdrawals: this.roundMoney(totalCashWithdrawals),
@@ -93,6 +99,9 @@ export class CashClosingsService {
   async create(dto: CreateCashClosingDto): Promise<CashClosing> {
     const initialCash = this.roundMoney(Number(dto.initialCash || 0));
     const cashSales = this.roundMoney(Number(dto.cashSales || 0));
+    const cashOrderPayments = this.roundMoney(
+      Number(dto.cashOrderPayments || 0),
+    );
     const cashExpenses = this.roundMoney(Number(dto.cashExpenses || 0));
     const cashDeposits = this.roundMoney(Number(dto.cashDeposits || 0));
     const cashWithdrawals = this.roundMoney(Number(dto.cashWithdrawals || 0));
@@ -101,6 +110,7 @@ export class CashClosingsService {
     const expectedCash = this.calculateExpectedCash({
       initialCash,
       cashSales,
+      cashOrderPayments,
       cashExpenses,
       cashDeposits,
       cashWithdrawals,
@@ -113,6 +123,7 @@ export class CashClosingsService {
       responsibleName: dto.responsibleName?.trim() || null,
       initialCash,
       cashSales,
+      cashOrderPayments,
       cashExpenses,
       cashDeposits,
       cashWithdrawals,
@@ -160,6 +171,11 @@ export class CashClosingsService {
         ? this.roundMoney(Number(dto.cashSales || 0))
         : Number(cashClosing.cashSales || 0);
 
+    const cashOrderPayments =
+      dto.cashOrderPayments !== undefined
+        ? this.roundMoney(Number(dto.cashOrderPayments || 0))
+        : Number(cashClosing.cashOrderPayments || 0);
+
     const cashExpenses =
       dto.cashExpenses !== undefined
         ? this.roundMoney(Number(dto.cashExpenses || 0))
@@ -183,6 +199,7 @@ export class CashClosingsService {
     const expectedCash = this.calculateExpectedCash({
       initialCash,
       cashSales,
+      cashOrderPayments,
       cashExpenses,
       cashDeposits,
       cashWithdrawals,
@@ -193,6 +210,7 @@ export class CashClosingsService {
     const dataToUpdate: Partial<CashClosing> = {
       initialCash,
       cashSales,
+      cashOrderPayments,
       cashExpenses,
       cashDeposits,
       cashWithdrawals,
@@ -244,13 +262,15 @@ export class CashClosingsService {
   private calculateExpectedCash(data: {
     initialCash: number;
     cashSales: number;
+    cashOrderPayments: number;
     cashExpenses: number;
     cashDeposits: number;
     cashWithdrawals: number;
   }) {
     return this.roundMoney(
       data.initialCash +
-        data.cashSales -
+        data.cashSales +
+        data.cashOrderPayments -
         data.cashExpenses -
         data.cashDeposits -
         data.cashWithdrawals,

@@ -36,13 +36,22 @@ export class CreateCashClosingDto {
   initialCash: number;
 
   @ApiPropertyOptional({
-    description: 'Ventas en efectivo del día.',
+    description: 'Ventas físicas en efectivo del día.',
     example: 180000,
   })
   @IsOptional()
-  @IsNumber({}, { message: 'Las ventas en efectivo deben ser numéricas.' })
-  @Min(0, { message: 'Las ventas en efectivo no pueden ser negativas.' })
+  @IsNumber({}, { message: 'Las ventas físicas en efectivo deben ser numéricas.' })
+  @Min(0, { message: 'Las ventas físicas en efectivo no pueden ser negativas.' })
   cashSales?: number;
+
+  @ApiPropertyOptional({
+    description: 'Pagos en efectivo recibidos por pedidos programados.',
+    example: 60000,
+  })
+  @IsOptional()
+  @IsNumber({}, { message: 'Los pagos de pedidos en efectivo deben ser numéricos.' })
+  @Min(0, { message: 'Los pagos de pedidos en efectivo no pueden ser negativos.' })
+  cashOrderPayments?: number;
 
   @ApiPropertyOptional({
     description: 'Gastos pagados en efectivo durante el día.',
@@ -54,12 +63,12 @@ export class CreateCashClosingDto {
   cashExpenses?: number;
 
   @ApiPropertyOptional({
-    description: 'Efectivo consignado o trasladado a banco.',
+    description: 'Efectivo consignado o trasladado desde caja hacia banco, Nequi, Daviplata u otra cuenta.',
     example: 100000,
   })
   @IsOptional()
-  @IsNumber({}, { message: 'Las consignaciones deben ser numéricas.' })
-  @Min(0, { message: 'Las consignaciones no pueden ser negativas.' })
+  @IsNumber({}, { message: 'Las consignaciones o traslados deben ser numéricos.' })
+  @Min(0, { message: 'Las consignaciones o traslados no pueden ser negativos.' })
   cashDeposits?: number;
 
   @ApiPropertyOptional({

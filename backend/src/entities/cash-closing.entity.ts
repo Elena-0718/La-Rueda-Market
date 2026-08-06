@@ -46,9 +46,19 @@ export class CashClosing {
     scale: 2,
     default: 0,
     name: 'cash_sales',
-    comment: 'Ventas en efectivo registradas durante el día',
+    comment: 'Ventas físicas en efectivo registradas durante el día',
   })
   cashSales: number;
+
+  @Column({
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+    name: 'cash_order_payments',
+    comment: 'Pagos en efectivo recibidos por pedidos programados durante el día',
+  })
+  cashOrderPayments: number;
 
   @Column({
     type: 'decimal',
@@ -66,7 +76,7 @@ export class CashClosing {
     scale: 2,
     default: 0,
     name: 'cash_deposits',
-    comment: 'Efectivo consignado o trasladado a banco durante el día',
+    comment: 'Efectivo consignado o trasladado desde caja hacia banco, Nequi, Daviplata u otra cuenta durante el día',
   })
   cashDeposits: number;
 

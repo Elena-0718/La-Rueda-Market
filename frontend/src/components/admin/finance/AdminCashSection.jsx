@@ -19,6 +19,7 @@ const initialClosingForm = {
   responsibleName: '',
   initialCash: '',
   cashSales: '',
+  cashOrderPayments: '',
   cashExpenses: '',
   cashDeposits: '',
   cashWithdrawals: '',
@@ -44,6 +45,11 @@ const depositMethods = [
   { value: 'CASH_CORRESPONDENT', label: 'Corresponsal bancario' },
   { value: 'OTHER', label: 'Otro' },
 ]
+
+const getDepositMethodLabel = (value) => {
+  const method = depositMethods.find((item) => item.value === value)
+  return method?.label || value || '-'
+}
 
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('es-CO', {
@@ -101,7 +107,8 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
   const expectedCash = useMemo(() => {
     return (
       toNumber(closingForm.initialCash) +
-      toNumber(closingForm.cashSales) -
+      toNumber(closingForm.cashSales) +
+      toNumber(closingForm.cashOrderPayments) -
       toNumber(closingForm.cashExpenses) -
       toNumber(closingForm.cashDeposits) -
       toNumber(closingForm.cashWithdrawals)
@@ -122,8 +129,8 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
         getCashDeposits({ startDate, endDate }),
       ])
 
-      setCashClosings(closingsData)
-      setCashDeposits(depositsData)
+      setCashClosings(Array.isArray(closingsData) ? closingsData : [])
+      setCashDeposits(Array.isArray(depositsData) ? depositsData : [])
     } catch (error) {
       const responseMessage =
         error?.response?.data?.message ||
@@ -184,6 +191,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
         responsibleName: closingForm.responsibleName || undefined,
         initialCash: toNumber(closingForm.initialCash),
         cashSales: toNumber(closingForm.cashSales),
+        cashOrderPayments: toNumber(closingForm.cashOrderPayments),
         cashExpenses: toNumber(closingForm.cashExpenses),
         cashDeposits: toNumber(closingForm.cashDeposits),
         cashWithdrawals: toNumber(closingForm.cashWithdrawals),
@@ -276,11 +284,17 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
       responsibleName: closing.responsibleName || '',
       initialCash: String(closing.initialCash || ''),
       cashSales: String(closing.cashSales || ''),
+      cashOrderPayments: String(closing.cashOrderPayments || ''),
       cashExpenses: String(closing.cashExpenses || ''),
       cashDeposits: String(closing.cashDeposits || ''),
       cashWithdrawals: String(closing.cashWithdrawals || ''),
       countedCash: String(closing.countedCash || ''),
       notes: closing.notes || '',
+    })
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
     })
   }
 
@@ -296,6 +310,11 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
       receiptNumber: deposit.receiptNumber || '',
       responsibleName: deposit.responsibleName || '',
       notes: deposit.notes || '',
+    })
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
     })
   }
 
@@ -314,6 +333,11 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
       setErrorMessage('')
 
       await deleteCashClosing(uuid)
+
+      if (editingClosingUuid === uuid) {
+        resetClosingForm()
+      }
+
       setMessage('Cierre de caja anulado correctamente.')
       await loadCashData()
 
@@ -337,7 +361,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
 
   const handleDeleteDeposit = async (uuid) => {
     const confirmed = window.confirm(
-      '¿Seguro que deseas anular esta consignación?',
+      '¿Seguro que deseas anular esta consignación o traslado?',
     )
 
     if (!confirmed) {
@@ -350,7 +374,12 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
       setErrorMessage('')
 
       await deleteCashDeposit(uuid)
-      setMessage('Consignación anulada correctamente.')
+
+      if (editingDepositUuid === uuid) {
+        resetDepositForm()
+      }
+
+      setMessage('Consignación o traslado anulado correctamente.')
       await loadCashData()
 
       if (onDataChange) {
@@ -359,7 +388,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
     } catch (error) {
       const responseMessage =
         error?.response?.data?.message ||
-        'No se pudo anular la consignación.'
+        'No se pudo anular la consignación o traslado.'
 
       setErrorMessage(
         Array.isArray(responseMessage)
@@ -375,12 +404,14 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
     <section className="rounded-2xl bg-white p-5 shadow-sm">
       <div className="mb-5 border-b border-gray-200 pb-4">
         <h2 className="text-xl font-bold text-gray-900">
-          Caja diaria y consignaciones
+          Caja diaria y traslados
         </h2>
 
         <p className="mt-2 text-sm text-gray-500">
-          Registra cierres diarios de caja, consignaciones y traslados a banco.
-          Estos datos se usarán en el informe para contador.
+          Registra cierres diarios de caja, pagos en efectivo recibidos por
+          ventas físicas y pedidos programados, gastos en efectivo y traslados
+          desde caja hacia banco, Nequi o Daviplata. Estos datos se usarán en el
+          informe para contador.
         </p>
       </div>
 
@@ -406,7 +437,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
               : 'bg-green-50 text-green-800 hover:bg-green-100'
           }`}
         >
-          Consignaciones
+          Traslados a banco
         </button>
       </div>
 
@@ -419,6 +450,22 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
       {errorMessage && (
         <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
           {errorMessage}
+        </div>
+      )}
+
+      {editingClosingUuid && activeCashTab === 'CLOSINGS' && (
+        <div className="mb-5 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm font-semibold text-yellow-800">
+          Estás editando un cierre de caja. Puedes corregir fecha, responsable,
+          valores del cuadre, saldo contado y notas. Si este cierre ya fue
+          revisado por el contador, deja una aclaración en notas.
+        </div>
+      )}
+
+      {editingDepositUuid && activeCashTab === 'DEPOSITS' && (
+        <div className="mb-5 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm font-semibold text-yellow-800">
+          Estás editando un traslado a banco o billetera. Puedes actualizar
+          fecha, valor, medio, cuenta destino, comprobante, responsable y
+          soporte en notas.
         </div>
       )}
 
@@ -473,7 +520,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Ventas efectivo
+                Ventas físicas en efectivo
               </label>
               <input
                 type="number"
@@ -483,11 +530,32 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
                 min="0"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Dinero recibido en efectivo por ventas realizadas directamente
+                en el local o punto físico.
+              </p>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Gastos efectivo
+                Pedidos pagados en efectivo
+              </label>
+              <input
+                type="number"
+                name="cashOrderPayments"
+                value={closingForm.cashOrderPayments}
+                onChange={handleClosingChange}
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
+                min="0"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Dinero recibido en efectivo por pedidos programados entregados.
+              </p>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-semibold text-gray-700">
+                Gastos pagados en efectivo
               </label>
               <input
                 type="number"
@@ -497,11 +565,14 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
                 min="0"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Dinero que salió de caja para pagar gastos del día.
+              </p>
             </div>
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Consignaciones
+                Consignaciones realizadas / traslados a banco
               </label>
               <input
                 type="number"
@@ -511,6 +582,10 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
                 min="0"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Dinero que sale de la caja física hacia banco, Nequi, Daviplata
+                u otra cuenta. No son pagos recibidos de clientes.
+              </p>
             </div>
 
             <div>
@@ -525,6 +600,10 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
                 min="0"
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Otros retiros de efectivo que no corresponden a gastos ni
+                consignaciones.
+              </p>
             </div>
 
             <div>
@@ -540,10 +619,22 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 min="0"
                 required
               />
+              <p className="mt-1 text-xs text-gray-500">
+                Dinero físico contado al finalizar el día.
+              </p>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="text-xs font-bold uppercase text-gray-500">
+                Fórmula de caja
+              </p>
+
+              <p className="mt-2 text-xs text-gray-600">
+                Saldo inicial + ventas físicas + pedidos en efectivo - gastos -
+                traslados - retiros.
+              </p>
+
+              <p className="mt-4 text-xs font-bold uppercase text-gray-500">
                 Saldo esperado
               </p>
               <p className="mt-2 text-lg font-bold text-gray-900">
@@ -585,14 +676,19 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 disabled={isSaving}
                 className="rounded-xl bg-green-700 px-5 py-3 text-sm font-bold uppercase text-white transition hover:bg-green-800 disabled:bg-gray-400"
               >
-                {editingClosingUuid ? 'Actualizar cierre' : 'Registrar cierre'}
+                {isSaving
+                  ? 'Guardando...'
+                  : editingClosingUuid
+                    ? 'Actualizar cierre'
+                    : 'Registrar cierre'}
               </button>
 
               {editingClosingUuid && (
                 <button
                   type="button"
                   onClick={resetClosingForm}
-                  className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-bold uppercase text-gray-700 transition hover:bg-gray-100"
+                  disabled={isSaving}
+                  className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-bold uppercase text-gray-700 transition hover:bg-gray-100 disabled:bg-gray-100"
                 >
                   Cancelar edición
                 </button>
@@ -608,11 +704,17 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
             <EmptyState message="No hay cierres de caja en este periodo." />
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-200">
-              <table className="w-full min-w-[980px] border-collapse text-sm">
+              <table className="w-full min-w-[1280px] border-collapse text-sm">
                 <thead className="bg-gray-100 text-left text-xs uppercase text-gray-600">
                   <tr>
                     <th className="px-4 py-3">Fecha</th>
                     <th className="px-4 py-3">Responsable</th>
+                    <th className="px-4 py-3 text-right">Inicial</th>
+                    <th className="px-4 py-3 text-right">Ventas físicas</th>
+                    <th className="px-4 py-3 text-right">Pedidos efectivo</th>
+                    <th className="px-4 py-3 text-right">Gastos</th>
+                    <th className="px-4 py-3 text-right">Traslados</th>
+                    <th className="px-4 py-3 text-right">Retiros</th>
                     <th className="px-4 py-3 text-right">Esperado</th>
                     <th className="px-4 py-3 text-right">Contado</th>
                     <th className="px-4 py-3 text-right">Diferencia</th>
@@ -632,6 +734,30 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                         {closing.responsibleName || '-'}
                       </td>
 
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(closing.initialCash)}
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(closing.cashSales)}
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(closing.cashOrderPayments)}
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(closing.cashExpenses)}
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(closing.cashDeposits)}
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                        {formatCurrency(closing.cashWithdrawals)}
+                      </td>
+
                       <td className="px-4 py-3 text-right font-semibold">
                         {formatCurrency(closing.expectedCash)}
                       </td>
@@ -640,7 +766,15 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                         {formatCurrency(closing.countedCash)}
                       </td>
 
-                      <td className="px-4 py-3 text-right font-bold">
+                      <td
+                        className={`px-4 py-3 text-right font-bold ${
+                          Number(closing.difference || 0) < 0
+                            ? 'text-red-700'
+                            : Number(closing.difference || 0) > 0
+                              ? 'text-green-700'
+                              : 'text-gray-900'
+                        }`}
+                      >
                         {formatCurrency(closing.difference)}
                       </td>
 
@@ -653,7 +787,8 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                           <button
                             type="button"
                             onClick={() => handleEditClosing(closing)}
-                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold uppercase text-blue-700 hover:bg-blue-100"
+                            disabled={isSaving}
+                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold uppercase text-blue-700 hover:bg-blue-100 disabled:bg-gray-100 disabled:text-gray-400"
                           >
                             Editar
                           </button>
@@ -661,7 +796,8 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                           <button
                             type="button"
                             onClick={() => handleDeleteClosing(closing.uuid)}
-                            className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold uppercase text-red-700 hover:bg-red-100"
+                            disabled={isSaving}
+                            className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold uppercase text-red-700 hover:bg-red-100 disabled:bg-gray-100 disabled:text-gray-400"
                           >
                             Anular
                           </button>
@@ -682,6 +818,13 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
             onSubmit={handleSubmitDeposit}
             className="mb-6 grid gap-4 rounded-2xl border border-gray-200 bg-gray-50 p-5 md:grid-cols-3"
           >
+            <div className="md:col-span-3 rounded-xl border border-blue-100 bg-blue-50 p-4 text-sm text-blue-800">
+              Este formulario registra dinero que La Rueda Market traslada desde
+              la caja hacia banco, Nequi, Daviplata u otra cuenta. No uses este
+              espacio para registrar pagos de clientes; esos pagos deben quedar
+              en ventas, pedidos o en el cierre de caja según corresponda.
+            </div>
+
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
                 Fecha
@@ -698,7 +841,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Valor consignado
+                Valor trasladado
               </label>
               <input
                 type="number"
@@ -713,7 +856,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
 
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">
-                Medio
+                Medio de traslado
               </label>
               <select
                 name="depositMethod"
@@ -739,7 +882,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 value={depositForm.destinationAccount}
                 onChange={handleDepositChange}
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
-                placeholder="Ej: Bancolombia ahorros"
+                placeholder="Ej: Bancolombia ahorros, Nequi, Daviplata"
               />
             </div>
 
@@ -753,7 +896,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 value={depositForm.receiptNumber}
                 onChange={handleDepositChange}
                 className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none focus:border-green-600"
-                placeholder="Ej: 458921"
+                placeholder="Ej: 458921 o enlace de soporte"
               />
             </div>
 
@@ -790,16 +933,19 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                 disabled={isSaving}
                 className="rounded-xl bg-green-700 px-5 py-3 text-sm font-bold uppercase text-white transition hover:bg-green-800 disabled:bg-gray-400"
               >
-                {editingDepositUuid
-                  ? 'Actualizar consignación'
-                  : 'Registrar consignación'}
+                {isSaving
+                  ? 'Guardando...'
+                  : editingDepositUuid
+                    ? 'Actualizar traslado'
+                    : 'Registrar traslado'}
               </button>
 
               {editingDepositUuid && (
                 <button
                   type="button"
                   onClick={resetDepositForm}
-                  className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-bold uppercase text-gray-700 transition hover:bg-gray-100"
+                  disabled={isSaving}
+                  className="rounded-xl border border-gray-300 px-5 py-3 text-sm font-bold uppercase text-gray-700 transition hover:bg-gray-100 disabled:bg-gray-100"
                 >
                   Cancelar edición
                 </button>
@@ -809,10 +955,10 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
 
           {isLoading ? (
             <div className="rounded-xl bg-gray-50 p-6 text-center text-sm font-semibold text-gray-500">
-              Cargando consignaciones...
+              Cargando traslados...
             </div>
           ) : !cashDeposits.length ? (
-            <EmptyState message="No hay consignaciones en este periodo." />
+            <EmptyState message="No hay traslados registrados en este periodo." />
           ) : (
             <div className="overflow-x-auto rounded-xl border border-gray-200">
               <table className="w-full min-w-[980px] border-collapse text-sm">
@@ -823,6 +969,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                     <th className="px-4 py-3">Medio</th>
                     <th className="px-4 py-3">Cuenta destino</th>
                     <th className="px-4 py-3">Comprobante</th>
+                    <th className="px-4 py-3">Responsable</th>
                     <th className="px-4 py-3">Notas</th>
                     <th className="px-4 py-3 text-right">Acciones</th>
                   </tr>
@@ -840,7 +987,7 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                       </td>
 
                       <td className="px-4 py-3">
-                        {deposit.depositMethod || '-'}
+                        {getDepositMethodLabel(deposit.depositMethod)}
                       </td>
 
                       <td className="px-4 py-3">
@@ -852,6 +999,10 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                       </td>
 
                       <td className="px-4 py-3">
+                        {deposit.responsibleName || '-'}
+                      </td>
+
+                      <td className="px-4 py-3">
                         {deposit.notes || '-'}
                       </td>
 
@@ -860,7 +1011,8 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                           <button
                             type="button"
                             onClick={() => handleEditDeposit(deposit)}
-                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold uppercase text-blue-700 hover:bg-blue-100"
+                            disabled={isSaving}
+                            className="rounded-lg bg-blue-50 px-3 py-2 text-xs font-bold uppercase text-blue-700 hover:bg-blue-100 disabled:bg-gray-100 disabled:text-gray-400"
                           >
                             Editar
                           </button>
@@ -868,7 +1020,8 @@ export const AdminCashSection = ({ startDate, endDate, onDataChange }) => {
                           <button
                             type="button"
                             onClick={() => handleDeleteDeposit(deposit.uuid)}
-                            className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold uppercase text-red-700 hover:bg-red-100"
+                            disabled={isSaving}
+                            className="rounded-lg bg-red-50 px-3 py-2 text-xs font-bold uppercase text-red-700 hover:bg-red-100 disabled:bg-gray-100 disabled:text-gray-400"
                           >
                             Anular
                           </button>
