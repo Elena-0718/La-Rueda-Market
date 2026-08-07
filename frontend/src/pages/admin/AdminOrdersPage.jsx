@@ -127,13 +127,17 @@ const getBadgeClass = (type) => {
     stone: 'bg-stone-100 text-stone-700',
   }
 
-  return `inline-flex rounded-full px-3 py-1 text-xs font-black ${classes[type] || classes.stone}`
+  return `inline-flex rounded-full px-3 py-1 text-xs font-black ${
+    classes[type] || classes.stone
+  }`
 }
 
 const getPaymentBadgeType = (payment) => {
   if (!payment) return 'amber'
   if (payment.status === 'CONFIRMED') return 'green'
-  if (payment.status === 'REJECTED' || payment.status === 'CANCELLED') return 'red'
+  if (payment.status === 'REJECTED' || payment.status === 'CANCELLED') {
+    return 'red'
+  }
   return 'amber'
 }
 
@@ -152,15 +156,79 @@ const getSummaryCardClass = (isActive) => {
   return 'rounded-3xl border-2 border-transparent bg-white p-5 text-left shadow cursor-pointer hover:border-green-200 hover:bg-green-50'
 }
 
+const getOrderDetails = (order) => {
+  if (!order) return []
+
+  if (Array.isArray(order.details)) return order.details
+  if (Array.isArray(order.orderDetails)) return order.orderDetails
+  if (Array.isArray(order.items)) return order.items
+
+  return []
+}
+
+const getDetailProductName = (detail) => {
+  return (
+    detail?.product?.name ||
+    detail?.productName ||
+    detail?.name ||
+    'PRODUCTO SIN NOMBRE'
+  )
+}
+
+const getDetailProductDescription = (detail) => {
+  return detail?.product?.description || detail?.description || ''
+}
+
+const getDetailQuantity = (detail) => {
+  return Number(detail?.quantity || detail?.amount || 0)
+}
+
+const getDetailUnitPrice = (detail) => {
+  return Number(
+    detail?.unitPrice ||
+      detail?.price ||
+      detail?.productPrice ||
+      detail?.salePrice ||
+      detail?.product?.price ||
+      0,
+  )
+}
+
+const getDetailSubtotal = (detail) => {
+  const backendSubtotal =
+    detail?.subtotal ||
+    detail?.lineTotal ||
+    detail?.total ||
+    detail?.totalPrice
+
+  if (backendSubtotal !== undefined && backendSubtotal !== null) {
+    return Number(backendSubtotal || 0)
+  }
+
+  return getDetailQuantity(detail) * getDetailUnitPrice(detail)
+}
+
 function AdminOrdersPage() {
   const navigate = useNavigate()
 
   const [orders, setOrders] = useState([])
   const [activeFilter, setActiveFilter] = useState(ORDER_FILTERS.ALL)
+  const [selectedOrder, setSelectedOrder] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isWorking, setIsWorking] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+
+  const selectedOrderDetails = useMemo(() => {
+    return getOrderDetails(selectedOrder)
+  }, [selectedOrder])
+
+  const selectedOrderProductsTotal = useMemo(() => {
+    return selectedOrderDetails.reduce(
+      (total, detail) => total + getDetailSubtotal(detail),
+      0,
+    )
+  }, [selectedOrderDetails])
 
   const summary = useMemo(() => {
     const totalOrders = orders.length
@@ -239,7 +307,7 @@ function AdminOrdersPage() {
       setErrorMessage('')
 
       const data = await getAllOrdersAdmin()
-      setOrders(data)
+      setOrders(Array.isArray(data) ? data : [])
     } catch (error) {
       const backendMessage =
         error?.response?.data?.message ||
@@ -531,7 +599,7 @@ function AdminOrdersPage() {
               </section>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1150px] text-left">
+                <table className="w-full min-w-[1200px] text-left">
                   <thead className="bg-green-50 text-sm text-green-950">
                     <tr>
                       <th className="px-5 py-4 font-black">PEDIDO</th>
@@ -623,7 +691,16 @@ function AdminOrdersPage() {
                         </td>
 
                         <td className="px-5 py-5">
-                          <div className="flex min-w-[260px] flex-wrap gap-2">
+                          <div className="flex min-w-[280px] flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={isWorking}
+                              onClick={() => setSelectedOrder(order)}
+                              className="rounded-full border border-green-800 px-4 py-2 text-xs font-black text-green-900 hover:bg-green-50 disabled:border-stone-300 disabled:text-stone-400"
+                            >
+                              VER DETALLE
+                            </button>
+
                             {order.payment?.status === 'PENDING' && (
                               <>
                                 <button
@@ -769,6 +846,223 @@ function AdminOrdersPage() {
           </section>
         )}
       </section>
+
+      {selectedOrder && (
+        <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/40 px-4 py-8">
+          <section className="w-full max-w-5xl rounded-3xl bg-white shadow-2xl">
+            <div className="flex flex-col gap-4 border-b border-stone-100 p-6 md:flex-row md:items-start md:justify-between">
+              <div>
+                <p className="text-sm font-bold tracking-widest text-green-700">
+                  DETALLE DEL PEDIDO
+                </p>
+
+                <h2 className="mt-2 text-3xl font-black text-green-900">
+                  #{selectedOrder.uuid.slice(0, 8).toUpperCase()}
+                </h2>
+
+                <p className="mt-2 text-sm font-semibold text-stone-500">
+                  Registrado: {formatDate(selectedOrder.createdAt)}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedOrder(null)}
+                className="rounded-full border border-green-800 px-5 py-3 text-sm font-black text-green-900 hover:bg-green-50"
+              >
+                CERRAR
+              </button>
+            </div>
+
+            <div className="grid gap-4 p-6 md:grid-cols-3">
+              <div className="rounded-2xl bg-green-50 p-4">
+                <p className="text-xs font-black uppercase text-green-700">
+                  Cliente
+                </p>
+                <p className="mt-2 font-black text-green-950">
+                  {selectedOrder.user?.fullName ||
+                    selectedOrder.user?.name ||
+                    'SIN NOMBRE'}
+                </p>
+                <p className="mt-1 text-sm text-stone-700">
+                  {selectedOrder.shippingPhone ||
+                    selectedOrder.user?.phone ||
+                    'NO REGISTRADO'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-stone-50 p-4">
+                <p className="text-xs font-black uppercase text-stone-500">
+                  Entrega
+                </p>
+                <p className="mt-2 font-black text-green-950">
+                  {getFulfillmentLabel(selectedOrder.fulfillmentType)}
+                </p>
+                <p className="mt-1 text-sm text-stone-700">
+                  {getDeliveryLabel(selectedOrder)}
+                </p>
+                <p className="mt-1 text-sm text-stone-700">
+                  Domicilio: {formatCurrency(selectedOrder.deliveryCost)}
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-stone-50 p-4">
+                <p className="text-xs font-black uppercase text-stone-500">
+                  Estado
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className={getBadgeClass(getOrderBadgeType(selectedOrder.status))}>
+                    {getOrderStatusLabel(selectedOrder.status)}
+                  </span>
+                  <span className={getBadgeClass(getPaymentBadgeType(selectedOrder.payment))}>
+                    {getPaymentLabel(selectedOrder.payment)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 pb-6">
+              <div className="mb-4 rounded-2xl border border-stone-200 bg-white p-4">
+                <p className="text-sm font-black uppercase text-green-900">
+                  Dirección / referencia
+                </p>
+                <p className="mt-2 text-sm text-stone-700">
+                  {selectedOrder.shippingAddress || 'SIN REFERENCIA REGISTRADA'}
+                </p>
+
+                {selectedOrder.deliveryNotes && (
+                  <>
+                    <p className="mt-4 text-sm font-black uppercase text-green-900">
+                      Notas de entrega
+                    </p>
+                    <p className="mt-2 text-sm text-stone-700">
+                      {selectedOrder.deliveryNotes}
+                    </p>
+                  </>
+                )}
+
+                {selectedOrder.payment && (
+                  <>
+                    <p className="mt-4 text-sm font-black uppercase text-green-900">
+                      Pago
+                    </p>
+                    <div className="mt-2 grid gap-2 text-sm text-stone-700 md:grid-cols-3">
+                      <p>
+                        <span className="font-bold">Método: </span>
+                        {getPaymentMethodLabel(selectedOrder.payment.method)}
+                      </p>
+                      <p>
+                        <span className="font-bold">Referencia: </span>
+                        {selectedOrder.payment.reference || 'SIN REFERENCIA'}
+                      </p>
+                      <p>
+                        <span className="font-bold">Notas: </span>
+                        {selectedOrder.payment.paymentNotes || 'SIN NOTAS'}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-stone-200">
+                <table className="w-full min-w-[760px] text-left text-sm">
+                  <thead className="bg-green-50 text-green-950">
+                    <tr>
+                      <th className="px-4 py-3 font-black">PRODUCTO</th>
+                      <th className="px-4 py-3 font-black">DESCRIPCIÓN</th>
+                      <th className="px-4 py-3 text-right font-black">CANTIDAD</th>
+                      <th className="px-4 py-3 text-right font-black">
+                        PRECIO UNITARIO
+                      </th>
+                      <th className="px-4 py-3 text-right font-black">
+                        SUBTOTAL
+                      </th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {selectedOrderDetails.length === 0 ? (
+                      <tr>
+                        <td
+                          colSpan="5"
+                          className="px-4 py-8 text-center font-semibold text-stone-500"
+                        >
+                          ESTE PEDIDO NO TRAE PRODUCTOS EN LA RESPUESTA DEL BACKEND.
+                        </td>
+                      </tr>
+                    ) : (
+                      selectedOrderDetails.map((detail, index) => (
+                        <tr
+                          key={detail.uuid || `${getDetailProductName(detail)}-${index}`}
+                          className="border-t border-stone-100"
+                        >
+                          <td className="px-4 py-4 font-black text-green-950">
+                            {getDetailProductName(detail)}
+                          </td>
+
+                          <td className="px-4 py-4 text-stone-600">
+                            {getDetailProductDescription(detail) || '-'}
+                          </td>
+
+                          <td className="px-4 py-4 text-right font-semibold">
+                            {getDetailQuantity(detail)}
+                          </td>
+
+                          <td className="px-4 py-4 text-right">
+                            {formatCurrency(getDetailUnitPrice(detail))}
+                          </td>
+
+                          <td className="px-4 py-4 text-right font-black text-green-900">
+                            {formatCurrency(getDetailSubtotal(detail))}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+
+                  <tfoot className="bg-stone-50">
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="px-4 py-4 text-right font-black text-stone-700"
+                      >
+                        Subtotal productos
+                      </td>
+                      <td className="px-4 py-4 text-right font-black text-green-900">
+                        {formatCurrency(selectedOrderProductsTotal)}
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="px-4 py-4 text-right font-black text-stone-700"
+                      >
+                        Domicilio
+                      </td>
+                      <td className="px-4 py-4 text-right font-black text-green-900">
+                        {formatCurrency(selectedOrder.deliveryCost)}
+                      </td>
+                    </tr>
+
+                    <tr>
+                      <td
+                        colSpan="4"
+                        className="px-4 py-4 text-right text-lg font-black text-green-950"
+                      >
+                        Total pedido
+                      </td>
+                      <td className="px-4 py-4 text-right text-lg font-black text-green-950">
+                        {formatCurrency(selectedOrder.total)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
     </main>
   )
 }

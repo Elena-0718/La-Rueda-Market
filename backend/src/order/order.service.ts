@@ -426,11 +426,27 @@ export class OrderService {
       );
     }
 
+    const inventoryOutputs: {
+      inventory: Inventory;
+      quantity: number;
+      orderUuid: string;
+      productName: string;
+    }[] = [];
+
     for (const detail of order.orderDetails) {
       const product = detail.product;
+      const quantity = Number(detail.quantity || 0);
 
       if (!product) {
-        continue;
+        throw new BadRequestException(
+          'No se puede marcar el pedido como entregado porque uno de los productos no tiene información asociada.',
+        );
+      }
+
+      if (quantity <= 0) {
+        throw new BadRequestException(
+          `No se puede marcar el pedido como entregado. El producto "${product.name}" tiene una cantidad inválida.`,
+        );
       }
 
       const inventory =
@@ -438,39 +454,34 @@ export class OrderService {
           product.uuid,
         );
 
-      if (!inventory || inventory.isTracked !== true) {
-        continue;
+      if (!inventory) {
+        throw new BadRequestException(
+          `NO SE PUEDE MARCAR EL PEDIDO COMO ENTREGADO. EL PRODUCTO "${product.name}" NO TIENE INVENTARIO CREADO. DEBES CREAR SU INVENTARIO PRIMERO.`,
+        );
+      }
+
+      if (inventory.isTracked !== true) {
+        throw new BadRequestException(
+          `NO SE PUEDE MARCAR EL PEDIDO COMO ENTREGADO. EL PRODUCTO "${product.name}" TIENE INVENTARIO, PERO NO ESTÁ ACTIVO PARA CONTROL DE STOCK. ACTIVA EL CONTROL DE INVENTARIO O AJUSTA EL PEDIDO ANTES DE ENTREGAR.`,
+        );
       }
 
       await this.validateInventoryAvailability(
         inventory,
-        Number(detail.quantity || 0),
+        quantity,
         product.name,
       );
-    }
 
-    for (const detail of order.orderDetails) {
-      const product = detail.product;
-
-      if (!product) {
-        continue;
-      }
-
-      const inventory =
-        await this.orderRepository.findInventoryByProductUuidRepository(
-          product.uuid,
-        );
-
-      if (!inventory || inventory.isTracked !== true) {
-        continue;
-      }
-
-      await this.applyInventoryOutputForOrder({
+      inventoryOutputs.push({
         inventory,
-        quantity: Number(detail.quantity || 0),
+        quantity,
         orderUuid: order.uuid,
         productName: product.name,
       });
+    }
+
+    for (const output of inventoryOutputs) {
+      await this.applyInventoryOutputForOrder(output);
     }
   }
 
@@ -483,7 +494,7 @@ export class OrderService {
 
     if (quantity > previousStock) {
       throw new BadRequestException(
-        `NO HAY STOCK SUFICIENTE PARA "${productName}". STOCK ACTUAL: ${previousStock}. AJUSTA EL INVENTARIO O AJUSTA EL PEDIDO ANTES DE MARCARLO COMO ENTREGADO.`,
+        `NO SE PUEDE MARCAR EL PEDIDO COMO ENTREGADO. NO HAY STOCK SUFICIENTE PARA "${productName}". STOCK ACTUAL: ${previousStock}. CANTIDAD PEDIDA: ${quantity}. AJUSTA EL INVENTARIO O AJUSTA EL PEDIDO ANTES DE MARCARLO COMO ENTREGADO.`,
       );
     }
   }

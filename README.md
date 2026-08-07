@@ -1,21 +1,53 @@
-# LA RUEDA MARKET
+# La Rueda Market
 
-La Rueda Market es una plataforma web desarrollada como Producto Mínimo Viable (PMV) para apoyar la operación de un supermercado rural.
+La Rueda Market es una plataforma web desarrollada como Producto Mínimo Viable (PMV) para apoyar la operación comercial y administrativa de un supermercado rural.
 
-El sistema permite a los clientes consultar productos, agregarlos al carrito, crear pedidos, seleccionar forma de entrega, registrar pagos y ver recetas recomendadas desde productos principales como carnes.  
-Desde el panel administrativo, permite gestionar productos, categorías, usuarios, pedidos, pagos, domicilios, inventario y recetas.
+El sistema permite que los clientes consulten productos, agreguen productos al carrito, creen pedidos, registren pagos, consulten recetas recomendadas y marquen productos como favoritos. Desde el panel administrativo permite gestionar productos, categorías, usuarios, pedidos, pagos, domicilios, inventario, compras, ventas físicas, gastos, caja diaria, traslados a banco e informes de apoyo contable.
+
+El objetivo del proyecto es ser una herramienta operativa para vender, organizar pedidos, controlar inventario, registrar ingresos y egresos, y apoyar la administración diaria de La Rueda Market.
 
 ---
 
-## Objetivo del proyecto
+## Estado del proyecto
 
-Desarrollar una solución web funcional que integre el proceso de compra y administración de La Rueda Market:
+El sistema se encuentra desplegado en producción.
+
+- Frontend: https://la-rueda-market.vercel.app
+- Backend API: https://la-rueda-market.onrender.com/api
+- Swagger: https://la-rueda-market.onrender.com/api/docs
+- Repositorio: https://github.com/Elena-0718/La-Rueda-Market.git
+
+---
+
+## Flujo principal
 
 ```text
-Cliente → Catálogo → Carrito → Pedido → Pago → Entrega
+Cliente
+  ↓
+Catálogo de productos
+  ↓
+Carrito de compras
+  ↓
+Pedido
+  ↓
+Pago
+  ↓
+Entrega o recogida en tienda
 ```
 
-Además, el proyecto incluye control administrativo de inventario y recetas comerciales para apoyar la venta cruzada de productos.
+Flujo administrativo:
+
+```text
+Productos
+  ↓
+Inventario
+  ↓
+Compras / Ventas físicas
+  ↓
+Gastos / Caja diaria
+  ↓
+Informe financiero e informe para contador
+```
 
 ---
 
@@ -39,50 +71,55 @@ Además, el proyecto incluye control administrativo de inventario y recetas come
 - Axios
 - React Router DOM
 
-### Herramientas
+### Despliegue y herramientas
 
 - Git
 - GitHub
+- Render
+- Vercel
+- Supabase PostgreSQL
 - Visual Studio Code
-- PostgreSQL / pgAdmin
 
 ---
 
-## Estructura del proyecto
+## Estructura general del proyecto
 
 ```text
 La-Rueda-Market
 │
 ├── backend
-│   ├── src
-│   │   ├── auth
-│   │   ├── users
-│   │   ├── credentials
-│   │   ├── products
-│   │   ├── categories
-│   │   ├── cart
-│   │   ├── cart-detail
-│   │   ├── orders
-│   │   ├── order-detail
-│   │   ├── payments
-│   │   ├── deliveries
-│   │   ├── inventory
-│   │   ├── inventory-movement
-│   │   ├── recipes
-│   │   └── entities
-│   └── package.json
+│   └── src
+│       ├── auth
+│       ├── users
+│       ├── credentials
+│       ├── products
+│       ├── categories
+│       ├── cart
+│       ├── orders
+│       ├── payments
+│       ├── deliveries
+│       ├── inventory
+│       ├── inventory-movement
+│       ├── recipes
+│       ├── favorite-products
+│       ├── expenses
+│       ├── purchases
+│       ├── physical-sales
+│       ├── cash-closings
+│       ├── cash-deposits
+│       ├── financial-report
+│       └── entities
 │
 ├── frontend
-│   ├── public
-│   ├── src
-│   │   ├── api
-│   │   ├── components
-│   │   ├── features
-│   │   ├── layouts
-│   │   ├── pages
-│   │   └── routes
-│   └── package.json
+│   └── src
+│       ├── api
+│       ├── components
+│       ├── features
+│       ├── layouts
+│       ├── pages
+│       └── routes
 │
+├── docs
 ├── README.md
 ├── .gitignore
 └── LICENSE
@@ -90,7 +127,170 @@ La-Rueda-Market
 
 ---
 
-## Instalación y ejecución
+## Módulos del cliente
+
+- Registro e inicio de sesión.
+- Catálogo de productos.
+- Búsqueda de productos.
+- Filtros por categoría.
+- Carrito de compras.
+- Creación de pedidos.
+- Selección de entrega:
+  - Recoger en tienda.
+  - Domicilio programado.
+- Registro de pago:
+  - Efectivo.
+  - Transferencia.
+- Consulta de pedidos.
+- Consulta de recetas.
+- Productos recomendados desde recetas.
+- Productos favoritos.
+
+---
+
+## Módulos administrativos
+
+- Gestión de usuarios.
+- Gestión de productos.
+- Gestión de categorías.
+- Gestión de pedidos.
+- Consulta de detalle de pedidos.
+- Confirmación y rechazo de pagos.
+- Gestión de domicilios.
+- Control de inventario.
+- Movimientos de inventario.
+- Registro de compras.
+- Registro de ventas físicas.
+- Registro de gastos.
+- Caja diaria.
+- Traslados a banco o billeteras.
+- Informe financiero.
+- Informe para contador.
+- Gestión de recetas.
+
+---
+
+## Reglas principales del negocio
+
+- Los productos activos se muestran en el catálogo del cliente.
+- Los pedidos programados pueden recibirse aunque no exista stock físico inmediato.
+- Las ventas físicas sí requieren inventario disponible.
+- Las compras tipo inventario aumentan el stock físico.
+- Las compras para pedido programado registran costo, pero no aumentan inventario físico.
+- Las ventas físicas descuentan inventario.
+- Los pedidos descuentan inventario solo cuando se marcan como entregados y el producto tiene control de stock.
+- La caja diaria controla únicamente efectivo físico.
+- Los pagos por transferencia o billetera se validan con el soporte o movimiento externo correspondiente.
+
+
+---
+
+## Roles actuales
+
+### CLIENT
+
+Rol asignado al cliente de la tienda.
+
+Puede:
+
+- Consultar productos.
+- Crear pedidos.
+- Registrar pagos.
+- Consultar sus pedidos.
+- Usar el carrito.
+- Ver recetas.
+- Marcar productos favoritos.
+
+### ADMIN
+
+Rol asignado al administrador principal.
+
+Puede gestionar los módulos administrativos del sistema:
+
+- Productos.
+- Categorías.
+- Usuarios.
+- Pedidos.
+- Pagos.
+- Domicilios.
+- Inventario.
+- Compras.
+- Ventas físicas.
+- Gastos.
+- Caja.
+- Informes.
+- Recetas.
+
+---
+
+## Mejoras futuras
+
+### Roles operativos
+
+Se plantea agregar roles con permisos limitados cuando el sistema esté operando con usuarios reales:
+
+- `SELLER`: para registrar ventas físicas, consultar inventario operativo y realizar cierres de caja.
+- `DELIVERY`: para consultar pedidos por entregar, ver detalle del pedido y marcar entregas.
+
+### Nómina
+
+Se plantea crear un módulo para registrar pagos de personal, turnos, pagos temporales y costos laborales asociados a la operación.
+
+### Beneficios por cliente frecuente
+
+Se plantea crear un módulo para identificar clientes frecuentes según sus compras acumuladas y asignar descuentos administrados por La Rueda Market.
+
+```text
+Cliente con compras acumuladas
+  ↓
+Administrador revisa elegibilidad
+  ↓
+Administrador asigna beneficio
+  ↓
+Cliente aplica descuento en un pedido
+```
+
+
+
+---
+
+## Diagrama relacional simplificado
+
+```mermaid
+erDiagram
+    USERS ||--|| CREDENTIALS : has
+    USERS ||--o{ ORDERS : creates
+    USERS ||--o{ CART : owns
+    USERS ||--o{ FAVORITE_PRODUCTS : marks
+
+    CATEGORIES ||--o{ PRODUCTS : contains
+
+    PRODUCTS ||--o{ CART_DETAILS : added_to
+    PRODUCTS ||--o{ ORDER_DETAILS : ordered_in
+    PRODUCTS ||--o{ INVENTORY : tracked_by
+    PRODUCTS ||--o{ PURCHASE_DETAILS : purchased_in
+    PRODUCTS ||--o{ PHYSICAL_SALE_DETAILS : sold_in
+    PRODUCTS ||--o{ FAVORITE_PRODUCTS : favorite
+    PRODUCTS ||--o{ RECIPE_PRODUCTS : included_in
+
+    CART ||--o{ CART_DETAILS : contains
+
+    ORDERS ||--o{ ORDER_DETAILS : contains
+    ORDERS ||--o| PAYMENTS : has
+    ORDERS ||--o| DELIVERIES : schedules
+
+    INVENTORY ||--o{ INVENTORY_MOVEMENTS : records
+
+    PURCHASES ||--o{ PURCHASE_DETAILS : contains
+
+    PHYSICAL_SALES ||--o{ PHYSICAL_SALE_DETAILS : contains
+
+    RECIPES ||--o{ RECIPE_PRODUCTS : uses
+```
+
+---
+
+## Instalación local
 
 ### Clonar el repositorio
 
@@ -110,9 +310,9 @@ cd backend
 npm install
 ```
 
-### Configurar variables de entorno
+### Variables de entorno
 
-Crear un archivo `.env` dentro de la carpeta `backend`.
+Crear un archivo `.env.development` o `.env` dentro de la carpeta `backend`.
 
 ```env
 DB_HOST=localhost
@@ -131,18 +331,18 @@ JWT_EXPIRES_IN=1d
 npm run start:dev
 ```
 
-Backend:
+API local:
 
 ```text
 http://localhost:3000/api
 ```
 
-Swagger:
+Swagger local:
 
 ```text
 http://localhost:3000/api/docs
 ```
- 
+
 ---
 
 ## Frontend
@@ -154,13 +354,27 @@ cd frontend
 npm install
 ```
 
+### Variables de entorno
+
+Crear un archivo `.env` dentro de la carpeta `frontend`.
+
+```env
+VITE_API_URL=http://localhost:3000/api
+```
+
+Para producción:
+
+```env
+VITE_API_URL=https://la-rueda-market.onrender.com/api
+```
+
 ### Ejecutar frontend
 
 ```bash
 npm run dev
 ```
 
-Frontend:
+Frontend local:
 
 ```text
 http://localhost:5173
@@ -168,500 +382,53 @@ http://localhost:5173
 
 ---
 
-## Roles del sistema
+## Build de producción
 
-### CLIENT
+### Backend
 
-Usuario cliente de la tienda.
+```bash
+cd backend
+npm run build
+npm run start:prod
+```
 
-Puede:
+### Frontend
 
-- Registrarse e iniciar sesión.
-- Consultar productos.
-- Buscar y filtrar por categoría.
-- Agregar productos al carrito.
-- Modificar cantidades.
-- Crear pedidos.
-- Seleccionar recogida en tienda o domicilio programado.
-- Registrar pagos.
-- Consultar sus pedidos.
-- Ver recetas recomendadas.
-- Elegir productos desde una receta y agregarlos al carrito.
+```bash
+cd frontend
+npm run build
+npm run preview
+```
 
-### ADMIN
-
-Usuario administrador del sistema.
-
-Puede:
-
-- Gestionar productos.
-- Gestionar categorías.
-- Gestionar usuarios.
-- Gestionar pedidos.
-- Confirmar o rechazar pagos.
-- Gestionar domicilios.
-- Controlar inventario.
-- Registrar movimientos de inventario.
-- Crear y administrar recetas.
-
----
-
-# Módulos principales
-
-## Autenticación y usuarios
-
-Permite registro, inicio de sesión, cierre de sesión, protección con JWT y control de acceso por roles.
-
-Incluye:
-
-- Registro de clientes.
-- Login.
-- Perfil de usuario.
-- Gestión administrativa de usuarios.
-- Roles `CLIENT` y `ADMIN`.
-
----
-
-## Productos y categorías
-
-Permite gestionar el catálogo de la tienda.
-
-Incluye:
-
-- Creación y edición de productos.
-- Activación y desactivación de productos.
-- Asociación de productos a categorías.
-- Carga de imágenes.
-- Búsqueda por nombre.
-- Filtro por categoría.
-- Visualización de productos activos para clientes.
-
-Categorías usadas:
-
-- Abarrotes.
-- Aseo.
-- Frutas y verduras.
-- Carnes.
-- Papelería e impresiones.
-
----
-
-## Carrito
-
-Permite que el cliente construya su compra antes de generar el pedido.
-
-Incluye:
-
-- Agregar productos.
-- Actualizar cantidades.
-- Eliminar productos.
-- Vaciar carrito.
-- Calcular subtotales y total.
-
-Flujo:
+Preview local:
 
 ```text
-Producto → Agregar al carrito → Mi carrito → Finalizar pedido
+http://localhost:4173
 ```
 
 ---
 
-## Pedidos y entregas
+## Actualizar GitHub
 
-Permite convertir el carrito en un pedido y seleccionar la forma de entrega.
-
-Formas de entrega:
-
-```text
-PICKUP
-El cliente recoge en tienda.
-Costo de domicilio: $0.
-
-SCHEDULED_DELIVERY
-Domicilio programado según ruta.
-Costo de domicilio: $2.000.
-```
-
-Incluye:
-
-- Creación de pedidos.
-- Consulta de pedidos del cliente.
-- Consulta de detalle del pedido.
-- Cancelación de pedidos.
-- Gestión administrativa de estados.
-- Gestión de entregas para domicilio programado.
-
----
-
-## Pagos
-
-Permite registrar y administrar pagos de pedidos.
-
-Formas de pago:
-
-```text
-CASH
-Pago en efectivo.
-
-TRANSFER
-Pago por transferencia.
-```
-
-Estados:
-
-```text
-PENDING
-CONFIRMED
-REJECTED
-CANCELLED
-```
-
-Incluye:
-
-- Registro de pago por cliente.
-- Referencia para transferencia.
-- Confirmación de pago por administrador.
-- Rechazo de pago.
-- Consulta de pagos.
-
----
-
-## Inventario
-
-Permite controlar el stock físico de los productos desde el panel administrativo.
-
-Incluye:
-
-- Crear inventario por producto.
-- Registrar stock actual.
-- Definir stock mínimo.
-- Registrar proveedor.
-- Registrar precio de compra.
-- Marcar producto perecedero.
-- Definir fecha de vencimiento.
-- Consultar resumen de inventario.
-
-Alertas:
-
-```text
-NORMAL
-BAJO STOCK
-PRÓXIMO A VENCER
-VENCIDO
-SIN CONTROL
-```
-
-El stock exacto es administrativo y no se muestra al cliente.
-
----
-
-## Movimientos de inventario
-
-Permite registrar entradas y salidas de productos.
-
-Tipos:
-
-```text
-IN
-Entrada de inventario.
-
-OUT
-Salida de inventario.
-```
-
-Motivos principales:
-
-```text
-SUPPLIER_PURCHASE
-STORE_SALE
-ONLINE_SALE
-LOSS
-EXPIRATION
-POSITIVE_ADJUSTMENT
-NEGATIVE_ADJUSTMENT
-RETURN
-```
-
-Regla importante:
-
-```text
-No se permite registrar una salida mayor al stock actual.
+```bash
+git status
+git add README.md
+git commit -m "Update project README"
+git push origin main
 ```
 
 ---
 
-## Recetas
+## Alcance actual
 
-El módulo de recetas permite recomendar preparaciones desde productos principales y apoyar la venta cruzada.
+La Rueda Market es un sistema de gestión operativa para apoyar ventas, pedidos, pagos, inventario, compras, ventas físicas, gastos, caja diaria e informes básicos.
 
-Incluye:
-
-- Crear recetas desde administrador.
-- Agregar video.
-- Definir título, descripción, categoría, dificultad, tiempo y porciones.
-- Agregar notas de ingredientes.
-- Agregar pasos de preparación.
-- Agregar ingredientes extra.
-- Agregar consejos.
-- Activar o desactivar recetas.
-- Marcar recetas como destacadas.
-- Asociar productos principales.
-- Asociar productos recomendados.
-
-### Productos principales
-
-Son los productos que activan el botón:
-
-```text
-VER RECETAS
-```
-
-Ejemplo:
-
-```text
-Carne molida
-Pechuga de pollo
-Carne de cerdo
-```
-
-### Productos recomendados
-
-Son los productos que aparecen dentro de la receta para que el cliente pueda elegirlos y agregarlos al carrito.
-
-Ejemplo:
-
-```text
-Carne molida
-Pan hamburguesa
-Tomate
-Cebolla
-Queso
-```
-
-Flujo:
-
-```text
-Producto principal → Ver recetas → Receta → Producto recomendado → Elegir cantidad → Agregar al carrito
-```
 
 ---
 
-# Experiencia de usuario
+## Autora
 
-La interfaz fue diseñada para ser clara y fácil de usar.
-
-Incluye:
-
-- Navegación simple.
-- Header con acceso a productos, recetas, carrito y usuario.
-- Panel administrativo separado.
-- Tarjetas de producto.
-- Botones claros.
-- Mensajes de carga.
-- Mensajes de éxito.
-- Mensajes de error.
-- Filtros por categoría.
-- Búsqueda por nombre.
-- Flujo guiado para finalizar pedido.
-- Diseño responsivo.
-
----
-
-# Rutas principales del frontend
-
-## Cliente y público
-
-```text
-/
- /login
- /registro
- /perfil
- /carrito
- /finalizar-pedido
- /pagar-pedido/:uuid
- /mis-pedidos
- /mis-pedidos/:uuid
- /recetas
- /recetas/:uuid
- /productos/:uuid/comprar
-```
-
-## Administrador
-
-```text
-/admin
-/admin/productos
-/admin/productos/nuevo
-/admin/productos/:uuid/editar
-/admin/categorias
-/admin/categorias/nueva
-/admin/categorias/:uuid/editar
-/admin/usuarios
-/admin/pedidos
-/admin/inventario
-/admin/recetas
-```
-
----
-
-# Endpoints principales del backend
-
-## Auth
-
-```text
-POST /api/auth/login
-POST /api/auth/register
-```
-
-## Products
-
-```text
-GET    /api/products
-GET    /api/products/:uuid
-GET    /api/products/admin/all
-POST   /api/products
-PATCH  /api/products/:uuid
-PUT    /api/products/activate/:uuid
-DELETE /api/products/:uuid
-```
-
-## Categories
-
-```text
-GET    /api/categories
-GET    /api/categories/admin/all
-POST   /api/categories
-PATCH  /api/categories/:uuid
-PUT    /api/categories/activate/:uuid
-DELETE /api/categories/:uuid
-```
-
-## Cart
-
-```text
-GET    /api/cart
-DELETE /api/cart/empty
-DELETE /api/cart/cancel
-```
-
-## Cart Details
-
-```text
-POST   /api/cart-details/add-product
-PUT    /api/cart-details/update-product-quantity/:uuid
-DELETE /api/cart-details/delete-product/:uuid
-```
-
-## Orders
-
-```text
-POST   /api/orders
-GET    /api/orders/my-orders
-GET    /api/orders/:uuid
-PATCH  /api/orders/:uuid/cancel
-GET    /api/orders/admin/all
-PATCH  /api/orders/admin/:uuid/status
-DELETE /api/orders/admin/:uuid
-```
-
-## Payments
-
-```text
-POST   /api/payments/checkout
-GET    /api/payments/admin/all
-GET    /api/payments/:uuid
-PUT    /api/payments/admin/confirm/:uuid
-PUT    /api/payments/admin/status/:uuid
-DELETE /api/payments/admin/reject/:uuid
-```
-
-## Deliveries
-
-```text
-GET  /api/deliveries/admin/all
-POST /api/deliveries/admin
-GET  /api/deliveries/:uuid
-PUT  /api/deliveries/admin/:uuid/status
-```
-
-## Inventory
-
-```text
-POST   /api/inventory/admin
-GET    /api/inventory/admin
-GET    /api/inventory/admin/summary
-GET    /api/inventory/admin/:uuid
-PATCH  /api/inventory/admin/:uuid
-DELETE /api/inventory/admin/:uuid
-GET    /api/inventory/admin/:uuid/movements
-```
-
-## Inventory Movements
-
-```text
-POST   /api/inventory-movements/admin
-GET    /api/inventory-movements/admin
-GET    /api/inventory-movements/admin/:uuid
-GET    /api/inventory-movements/admin/inventory/:inventoryUuid
-PATCH  /api/inventory-movements/admin/:uuid
-DELETE /api/inventory-movements/admin/:uuid
-```
-
-## Recipes
-
-```text
-POST   /api/recipes/admin
-GET    /api/recipes/admin/all
-GET    /api/recipes/admin/:uuid
-PATCH  /api/recipes/admin/:uuid
-DELETE /api/recipes/admin/:uuid
-
-GET    /api/recipes
-GET    /api/recipes?productUuid=UUID_PRODUCTO_PRINCIPAL
-GET    /api/recipes/:uuid
-```
-
----
-
-# Estado actual del PMV
-
-El proyecto integra los módulos principales necesarios para demostrar el funcionamiento del PMV:
-
-- Autenticación.
-- Usuarios.
-- Categorías.
-- Productos.
-- Carrito.
-- Pedidos.
-- Pagos.
-- Domicilios.
-- Inventario.
-- Movimientos de inventario.
-- Recetas.
-- Panel administrativo.
-- Interfaz cliente.
-
-El sistema permite evidenciar un flujo completo de compra y administración.
-
----
-
-# Repositorio
-
-```text
-https://github.com/Elena-0718/La-Rueda-Market.git
-```
-
----
-
-
-# Autora
-
-```text
-Nórida Elena Rueda Peña
-Análisis y Desarrollo de Software - ADSO
+Nórida Elena Rueda Peña  
+Análisis y Desarrollo de Software - ADSO  
 SENA
-```
-
----
-
 
